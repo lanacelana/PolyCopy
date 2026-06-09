@@ -1,0 +1,166 @@
+/* Kotak Container Utama Kapsul */
+.smart-copy-tooltip {
+  --bg-main: #0f141c;         /* Super Deep Navy */
+  --bg-item: #1b222c;         /* Medium Slate Blue */
+  --border-item: #293241;     /* Light Slate */
+  
+  --accent-gold: #cca47c;     /* Luxury Gold / Tan */
+  --text-light: #f4eae1;      /* Off-White Cream */
+  --text-muted: #8a95a5;      /* Muted Steel Grey */
+  
+  /* Warna Tombol & Aksi */
+  --btn-link-bg: var(--accent-gold);
+  --btn-link-text: #0f141c;   
+  --btn-text-bg: var(--border-item);
+  --btn-text-text: var(--text-light);
+  
+  --btn-clear-bg: #8b2635;    /* Muted Rose/Red */
+  --btn-success-bg: #2d6a4f;  /* Deep Forest Green */
+  
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(254, 243, 199, 0.05);
+
+  position: fixed;
+  z-index: 100000000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--bg-main);
+  padding: 8px;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-item);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  min-width: 200px;
+  backdrop-filter: blur(8px);
+  
+  /* Mencegah teks menu ikut terseleksi/ter-highlight saat Ctrl+A */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Baris Tombol */
+.tooltip-buttons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.smart-copy-tooltip button {
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 32px;
+}
+
+/* Desain Kapsul & Tombol Bulat */
+.smart-copy-tooltip .btn-pill {
+  border-radius: 30px;
+  padding: 0 16px;
+  letter-spacing: 0.3px;
+}
+
+.smart-copy-tooltip .btn-circle {
+  border-radius: 50%;
+  width: 32px;
+  padding: 0;
+}
+
+/* Peta Warna Tombol Variabel */
+.smart-copy-tooltip .btn-blue {
+  background-color: var(--btn-link-bg);
+  color: var(--btn-link-text);
+  flex: 2;
+}
+
+.smart-copy-tooltip .btn-orange {
+  background-color: var(--btn-text-bg);
+  color: var(--btn-text-text);
+  flex: 2;
+  border: 1px solid var(--border-item);
+}
+
+.smart-copy-tooltip .btn-clear {
+  background-color: var(--btn-clear-bg);
+  color: white;
+  font-size: 13px;
+}
+
+.smart-copy-tooltip .btn-success {
+  background-color: var(--btn-success-bg) !important;
+  color: white !important;
+  flex: 4;
+  border-radius: 30px;
+}
+
+/* Efek Hover Halus */
+.smart-copy-tooltip button:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.smart-copy-tooltip button:active {
+  transform: translateY(0);
+}
+
+/* Daftar Antrean Atas */
+.tooltip-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid var(--border-item);
+  padding-bottom: 6px;
+  max-height: 110px;
+  overflow-y: auto;
+}
+
+/* Desain List Item Minimalis */
+.tooltip-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-item);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-light);
+  border: 1px solid var(--border-item);
+}
+
+/* Tombol Silang Eksklusif (Dipastikan Transparan Tanpa Latar Belakang Putih) */
+.tooltip-delete-btn {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  cursor: pointer;
+  height: auto !important;
+  width: auto !important;
+  line-height: 1;
+  padding: 2px !important;
+  border-radius: 0 !important;
+}
+
+.tooltip-delete-btn:hover {
+  color: #ef4444 !important;
+  background: transparent !important;
+  transform: scale(1.2) !important;
+}
+
+/* Custom Scrollbar */
+.tooltip-list-container::-webkit-scrollbar {
+  width: 4px;
+}
+.tooltip-list-container::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 10px;
+}

@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Multi-Copy Highlight",
+  "version": "1.4",
+  "description": "Highlight teks untuk mengumpulkan banyak teks sekaligus dengan format style/HTML dan palet warna premium.",
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["style.css"]
+    }
+  ],
+  "icons": {
+    "128": "paste.png"
+  },
+  "action": {
+    "default_icon": "paste.png",
+    "default_popup": "popup.html"
+  }
+}
