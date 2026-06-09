@@ -86,8 +86,8 @@ function updateBadgeForTab(tabId) {
     // Hapus teks badge "OFF" atau "ON" agar tampilan toolbar bersih
     chrome.action.setBadgeText({ text: "" });
 
-    const activePath = { "128": "icon_active.png" };
-    const inactivePath = { "128": "icon_inactive.png" };
+    const activePath = "icon_active.png";
+    const inactivePath = "icon_inactive.png";
 
     if (!data.enabled) {
       // Nonaktif secara global: Setel ikon default global dan tab spesifik ke grayscale
