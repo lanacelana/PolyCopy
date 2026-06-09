@@ -28,9 +28,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Tampilkan alamat host/judul tab saat ini pada kartu per-tab
     try {
       const urlObj = new URL(currentTab.url);
-      tabUrlDesc.innerText = urlObj.hostname || currentTab.title || "Tab saat ini";
+      tabUrlDesc.innerText = urlObj.hostname || currentTab.title || "This tab, mate";
     } catch (e) {
-      tabUrlDesc.innerText = currentTab.title || "Tab saat ini";
+      tabUrlDesc.innerText = currentTab.title || "This tab, mate";
     }
 
     // Memuat status konfigurasi awal dari storage
@@ -101,11 +101,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!enabled) {
       modeOff.classList.add("active");
-      globalStatus.innerText = "Inactive";
+      globalStatus.innerText = "No Go";
       globalStatus.classList.add("off");
       tabStatusCard.classList.add("hidden");
     } else {
-      globalStatus.innerText = "Active";
+      globalStatus.innerText = "Sweet As";
       globalStatus.classList.remove("off");
       
       if (mode === "global") {
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
       listContainer.innerHTML = "";
       
       if (data.textList.length === 0) {
-        listContainer.innerHTML = "<div style='color:var(--text-muted); text-align:center; padding: 10px;'>Belum ada item yang ditambahkan.</div>";
+        listContainer.innerHTML = "<div style='color:var(--text-muted); text-align:center; padding: 10px;'>Nothing here yet, mate. Grab some text!</div>";
         return;
       }
 
@@ -193,8 +193,8 @@ document.addEventListener("DOMContentLoaded", () => {
       chrome.storage.local.get({ textList: [] }, (data) => {
         if (data.textList.length === 0) return;
         updatePopupClipboard(data.textList, () => {
-          copyAllBtn.innerText = "Copied All Style!";
-          setTimeout(() => { copyAllBtn.innerText = "Copy All"; }, 1500);
+          copyAllBtn.innerText = "Grabbed the lot, mate!";
+          setTimeout(() => { copyAllBtn.innerText = "Grab the Lot"; }, 1500);
         });
       });
     };

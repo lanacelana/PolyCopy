@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Smart Multi-Copy Highlight",
+  "name": "Smart Multi-Copy Highlight, Mate",
   "version": "1.4",
-  "description": "Highlight teks untuk mengumpulkan banyak teks sekaligus dengan format style/HTML dan palet warna premium.",
+  "description": "Highlight heaps of text to grab 'em all at once with premium styles and colors. Fair dinkum!",
   "author": "lncln",
   "permissions": [
     "storage",

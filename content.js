@@ -137,16 +137,16 @@ function showTooltip(x, y, plainText, htmlText, textList) {
   // Tombol 1: Menyimpan sebagai Link (beserta sumber URL)
   const btnAddLink = document.createElement("button");
   btnAddLink.className = "btn-blue btn-pill";
-  btnAddLink.innerHTML = "Link";
+  btnAddLink.innerHTML = "Link It";
   btnAddLink.onclick = () => {
     if (!chrome.runtime?.id) return;
     const newItem = {
       type: "link",
-      plain: `Source: ${currentUrl}\n${plainText}\n`,
-      html: `<div><span style="font-size:13px; color:#f2ffe5;">Source: <a href="${currentUrl}" target="_blank" style="color:#dfff00;">${currentUrl}</a></span><br>${htmlText}<br></div>`
+      plain: `Source, mate: ${currentUrl}\n${plainText}\n`,
+      html: `<div><span style="font-size:13px; color:#f2ffe5;">Source, mate: <a href="${currentUrl}" target="_blank" style="color:#dfff00;">${currentUrl}</a></span><br>${htmlText}<br></div>`
     };
     const newList = [newItem, ...textList];
-    setSuccessEffect(btnAddLink, "✓ Added!", () => {
+    setSuccessEffect(btnAddLink, "✓ Sweet!", () => {
       triggerClipboardUpdate(newList);
     });
   };
@@ -154,7 +154,7 @@ function showTooltip(x, y, plainText, htmlText, textList) {
   // Tombol 2: Menyimpan sebagai teks murni saja
   const btnAddText = document.createElement("button");
   btnAddText.className = "btn-orange btn-pill";
-  btnAddText.innerHTML = "Text";
+  btnAddText.innerHTML = "Text It";
   btnAddText.onclick = () => {
     if (!chrome.runtime?.id) return;
     const newItem = {
@@ -163,7 +163,7 @@ function showTooltip(x, y, plainText, htmlText, textList) {
       html: `<div>${htmlText}<br></div>`
     };
     const newList = [...textList, newItem];
-    setSuccessEffect(btnAddText, "✓ Added!", () => {
+    setSuccessEffect(btnAddText, "✓ Sweet!", () => {
       triggerClipboardUpdate(newList);
     });
   };
