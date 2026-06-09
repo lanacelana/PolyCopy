@@ -100,10 +100,13 @@ function showTooltip(x, y, plainText, htmlText, textList) {
     textList.forEach((item, index) => {
       const listItem = document.createElement("div");
       listItem.className = "tooltip-list-item";
+      if (item.type === "link") {
+        listItem.classList.add("type-link");
+      }
       const itemText = document.createElement("span");
       
       // Ambil kata pertama dari teks (abaikan URL sumber jika itu bertipe link)
-      const cleanText = item.plain.replace(/^Source: .*?\n/, "").trim();
+      const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
       const firstWord = cleanText.split(/\s+/)[0] || "";
       const prefix = item.type === "link" ? "🔗 " : "📝 ";
 

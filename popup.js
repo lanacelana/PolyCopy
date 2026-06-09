@@ -136,12 +136,15 @@ document.addEventListener("DOMContentLoaded", () => {
       data.textList.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "text-item";
+        if (item.type === "link") {
+          div.classList.add("type-link");
+        }
 
         const textSpan = document.createElement("span");
         textSpan.className = "text-content";
 
         // Bersihkan prefix "Source: ..." jika ada agar teks asli tampil di awal list
-        const cleanText = item.plain.replace(/^Source: .*?\n/, "").trim();
+        const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
         textSpan.innerText = `${index + 1}. ${cleanText}`;
         textSpan.title = cleanText;
 

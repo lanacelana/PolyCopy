@@ -132,8 +132,12 @@
   border-radius: 8px;
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-light);
   border: 1px solid var(--border-item);
+}
+
+.tooltip-list-item.type-link {
+  background-color: rgba(223, 255, 0, 0.12);
+  border-color: rgba(223, 255, 0, 0.3);
 }
 
 /* Tombol Silang Eksklusif (Dipastikan Transparan Tanpa Latar Belakang Putih) */
