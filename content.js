@@ -105,12 +105,14 @@ function showTooltip(x, y, plainText, htmlText, textList) {
       }
       const itemText = document.createElement("span");
       
-      // Ambil kata pertama dari teks (abaikan URL sumber jika itu bertipe link)
+      // Ambil 2 kata pertama dari teks (abaikan URL sumber jika itu bertipe link)
       const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
-      const firstWord = cleanText.split(/\s+/)[0] || "";
+      const words = cleanText.split(/\s+/).filter(Boolean);
+      const displayWords = words.slice(0, 2).join(" ") || "";
+      const hasMore = words.length > 2;
       const prefix = item.type === "link" ? "🔗 " : "📝 ";
 
-      itemText.innerText = `${prefix}${firstWord}...`;
+      itemText.innerText = `${prefix}${displayWords}${hasMore ? "..." : ""}`;
       itemText.title = cleanText;
 
       const btnDelete = document.createElement("button");
