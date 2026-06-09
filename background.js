@@ -1,6 +1,8 @@
 /**
  * Smart Multi-Copy Highlight - Background Service Worker
  * Mengelola siklus hidup ekstensi dan status aktif/nonaktif pada ikon.
+ * 
+ * Crafted by lncln
  */
 
 // Menyetel status default 'enabled' saat ekstensi diinstal pertama kali

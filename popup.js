@@ -1,6 +1,8 @@
 /**
  * Smart Multi-Copy Highlight - Popup Script
  * Mengontrol logika tampilan antrean teks, aksi salin, dan toggle On/Off.
+ * 
+ * Crafted by lncln
  */
 
 document.addEventListener("DOMContentLoaded", () => {

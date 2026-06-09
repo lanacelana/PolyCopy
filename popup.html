@@ -195,6 +195,17 @@
     .copy-all-btn:active, .clear-btn:active {
       transform: translateY(0);
     }
+    .footer {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    .footer .signature {
+      color: var(--accent-gold);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -213,6 +224,9 @@
   <div class="actions">
     <button class="clear-btn" id="clearBtn">Clear All</button>
     <button class="copy-all-btn" id="copyAllBtn">Copy All</button>
+  </div>
+  <div class="footer">
+    crafted by <span class="signature">lncln</span>
   </div>
   <script src="popup.js"></script>
 </body>

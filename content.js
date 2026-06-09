@@ -2,6 +2,8 @@
  * Smart Multi-Copy Highlight - Content Script
  * Menangani pendeteksian seleksi teks (klik-drag & keyboard Ctrl+A/Cmd+A)
  * serta menampilkan antarmuka tooltip copy.
+ * 
+ * Crafted by lncln
  */
 
 let currentTooltip = null;
