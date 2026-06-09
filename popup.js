@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
       listContainer.innerHTML = "";
       
       if (data.textList.length === 0) {
-        listContainer.innerHTML = "<div style='color:#888; text-align:center; padding: 10px;'>Belum ada item yang ditambahkan.</div>";
+        listContainer.innerHTML = "<div style='color:var(--text-muted); text-align:center; padding: 10px;'>Belum ada item yang ditambahkan.</div>";
         return;
       }
 

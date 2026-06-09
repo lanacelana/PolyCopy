@@ -143,7 +143,7 @@ function showTooltip(x, y, plainText, htmlText, textList) {
     const newItem = {
       type: "link",
       plain: `Source: ${currentUrl}\n${plainText}\n`,
-      html: `<div><span style="font-size:13px; color:#f4eae1;">Source: <a href="${currentUrl}" target="_blank" style="color:#cca47c;">${currentUrl}</a></span><br>${htmlText}<br></div>`
+      html: `<div><span style="font-size:13px; color:#f2ffe5;">Source: <a href="${currentUrl}" target="_blank" style="color:#dfff00;">${currentUrl}</a></span><br>${htmlText}<br></div>`
     };
     const newList = [newItem, ...textList];
     setSuccessEffect(btnAddLink, "✓ Added!", () => {
