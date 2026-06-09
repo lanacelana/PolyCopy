@@ -231,21 +231,33 @@
       border-radius: 8px;
       font-size: 12px;
       transition: all 0.2s ease;
+      color: var(--text-light);
     }
     .text-item:hover {
       border-color: var(--accent-gold);
       transform: translateY(-1px);
     }
     .text-item.type-link {
-      background: rgba(223, 255, 0, 0.12);
-      border-color: rgba(223, 255, 0, 0.3);
+      background: var(--accent-gold);
+      border-color: var(--accent-gold);
+      color: #0b2114;
+    }
+    .text-item.type-link .text-content {
+      color: #0b2114;
+      font-weight: 600;
+    }
+    .text-item.type-link .delete-btn {
+      color: rgba(11, 33, 20, 0.6);
+    }
+    .text-item.type-link .delete-btn:hover {
+      color: #8b2635;
     }
     .text-content {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       width: 85%;
-      color: var(--text-light);
+      color: inherit;
     }
     .delete-btn {
       background: none;

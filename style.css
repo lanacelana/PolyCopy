@@ -132,12 +132,18 @@
   border-radius: 8px;
   font-size: 11px;
   font-weight: 500;
+  color: var(--text-light);
   border: 1px solid var(--border-item);
 }
 
 .tooltip-list-item.type-link {
-  background-color: rgba(223, 255, 0, 0.12);
-  border-color: rgba(223, 255, 0, 0.3);
+  background-color: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #0b2114;
+}
+
+.tooltip-list-item.type-link .tooltip-delete-btn {
+  color: rgba(11, 33, 20, 0.6) !important;
 }
 
 /* Tombol Silang Eksklusif (Dipastikan Transparan Tanpa Latar Belakang Putih) */
