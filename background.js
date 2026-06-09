@@ -78,25 +78,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 /**
- * Memperbarui visual badge teks pada ikon ekstensi berdasarkan tab tertentu.
+ * Memperbarui visual ikon ekstensi (berwarna/grayscale) dan membersihkan badge teks berdasarkan tab tertentu.
  * @param {number} tabId - ID tab yang ingin diperiksa.
  */
 function updateBadgeForTab(tabId) {
   chrome.storage.local.get({ enabled: true, mode: "global", activeTabIds: {} }, (data) => {
+    // Hapus teks badge "OFF" atau "ON" agar tampilan toolbar bersih
+    chrome.action.setBadgeText({ text: "" });
+
     if (!data.enabled) {
-      chrome.action.setBadgeText({ text: "OFF" });
-      chrome.action.setBadgeBackgroundColor({ color: "#8b2635" }); // Merah (Nonaktif global)
+      // Nonaktif secara global: Setel ikon default ke grayscale
+      chrome.action.setIcon({ path: "icon_inactive.png" });
     } else if (data.mode === "global") {
-      chrome.action.setBadgeText({ text: "" }); // Kosong/Aktif global
+      // Aktif secara global: Setel ikon default ke berwarna (Acid Forest)
+      chrome.action.setIcon({ path: "icon_active.png" });
     } else {
-      // Mode per-tab
+      // Mode per-tab: Setel ikon default ke grayscale
+      chrome.action.setIcon({ path: "icon_inactive.png" });
+      
+      // Setel ikon spesifik untuk tab saat ini berdasarkan status aktifnya
       const isTabActive = !!data.activeTabIds[tabId];
       if (isTabActive) {
-        chrome.action.setBadgeText({ text: "ON" });
-        chrome.action.setBadgeBackgroundColor({ color: "#2d6a4f" }); // Hijau (Aktif di tab ini)
+        chrome.action.setIcon({ path: "icon_active.png", tabId: tabId });
       } else {
-        chrome.action.setBadgeText({ text: "OFF" });
-        chrome.action.setBadgeBackgroundColor({ color: "#8a95a5" }); // Abu-abu (Nonaktif di tab ini)
+        chrome.action.setIcon({ path: "icon_inactive.png", tabId: tabId });
       }
     }
   });

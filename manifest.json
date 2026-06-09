@@ -19,10 +19,10 @@
     }
   ],
   "icons": {
-    "128": "paste.png"
+    "128": "icon_active.png"
   },
   "action": {
-    "default_icon": "paste.png",
+    "default_icon": "icon_active.png",
     "default_popup": "popup.html"
   }
 }
