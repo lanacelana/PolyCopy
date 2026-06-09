@@ -29,7 +29,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     
     .header h3 {
@@ -40,21 +40,118 @@
       letter-spacing: 0.5px;
     }
 
-    .status-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .status-text {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      transition: color 0.3s;
-    }
-
-    .status-text.enabled {
+    /* Header Status Badge */
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background-color: rgba(204, 164, 124, 0.12);
       color: var(--accent-gold);
+      border: 1px solid var(--accent-gold);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+    }
+    .status-badge.off {
+      background-color: rgba(139, 38, 53, 0.12);
+      color: #ef4444;
+      border-color: #ef4444;
+    }
+
+    /* Mode Selector Buttons */
+    .mode-selector {
+      display: flex;
+      background: var(--bg-item);
+      border: 1px solid var(--border-item);
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      gap: 4px;
+    }
+    
+    .mode-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .mode-btn:hover {
+      color: var(--text-light);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    
+    .mode-btn.active {
+      background: var(--border-item);
+      color: var(--accent-gold);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .mode-btn.active .icon {
+      filter: drop-shadow(0 0 4px var(--accent-gold));
+    }
+
+    .mode-btn .icon {
+      font-size: 14px;
+    }
+
+    /* Tab Status Card */
+    .tab-status-card {
+      background: linear-gradient(135deg, rgba(27, 34, 44, 0.6) 0%, rgba(41, 50, 65, 0.3) 100%);
+      border: 1px dashed var(--accent-gold);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 1;
+      max-height: 80px;
+      overflow: hidden;
+    }
+
+    .tab-status-card.hidden {
+      opacity: 0;
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-bottom: 0;
+      border-color: transparent;
+      pointer-events: none;
+    }
+
+    .tab-status-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-width: 70%;
+    }
+
+    .tab-status-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    .tab-status-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* Switch Container */
@@ -100,12 +197,12 @@
     }
 
     .list-container {
-      max-height: 220px;
+      max-height: 200px;
       overflow-y: auto;
       border: 1px solid var(--border-item);
       border-radius: 12px;
       padding: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       background-color: rgba(27, 34, 44, 0.3);
       display: flex;
       flex-direction: column;
@@ -161,6 +258,7 @@
       color: #ef4444;
       transform: scale(1.2);
     }
+    
     .actions {
       display: flex;
       gap: 8px;
@@ -195,9 +293,10 @@
     .copy-all-btn:active, .clear-btn:active {
       transform: translateY(0);
     }
+    
     .footer {
       text-align: center;
-      margin-top: 14px;
+      margin-top: 12px;
       font-size: 11px;
       color: var(--text-muted);
       letter-spacing: 0.5px;
@@ -211,20 +310,40 @@
 <body>
   <div class="header">
     <h3>Smart Multi-Copy</h3>
-    <div class="status-container">
-      <span class="status-text" id="statusText">Active</span>
-      <label class="switch">
-        <input type="checkbox" id="enableToggle" checked>
-        <span class="slider"></span>
-      </label>
-    </div>
+    <span class="status-badge" id="globalStatus">Active</span>
   </div>
+
+  <div class="mode-selector">
+    <button class="mode-btn" id="modeGlobal" title="Aktif di Semua Tab">
+      <span class="icon">🌐</span> Semua Tab
+    </button>
+    <button class="mode-btn" id="modeTab" title="Aktif Hanya di Tab yang Dipilih">
+      <span class="icon">📄</span> Per Tab
+    </button>
+    <button class="mode-btn" id="modeOff" title="Nonaktifkan Ekstensi">
+      <span class="icon">🔌</span> Matikan
+    </button>
+  </div>
+
+  <div class="tab-status-card" id="tabStatusCard">
+    <div class="tab-status-info">
+      <span class="tab-status-title">Aktif di Tab Ini</span>
+      <span class="tab-status-desc" id="tabUrlDesc">loading...</span>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="tabToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
   <div class="list-container" id="listContainer">
   </div>
+  
   <div class="actions">
     <button class="clear-btn" id="clearBtn">Clear All</button>
     <button class="copy-all-btn" id="copyAllBtn">Copy All</button>
   </div>
+  
   <div class="footer">
     crafted by <span class="signature">lncln</span>
   </div>

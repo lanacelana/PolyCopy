@@ -15,22 +15,24 @@ document.addEventListener("mouseup", (e) => {
   if (e.target.closest(".smart-copy-tooltip")) return;
   removeTooltip();
 
-  // Memeriksa status enabled terlebih dahulu sebelum memproses seleksi
-  chrome.storage.local.get({ enabled: true, textList: [] }, (data) => {
-    if (!data.enabled) return;
+  // Kirim pesan ke background script untuk memeriksa keaktifan tab saat ini
+  chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
+    if (response && response.isActive) {
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) return;
 
-    const selection = window.getSelection();
-    if (selection.rangeCount === 0) return;
+      const range = selection.getRangeAt(0);
+      const selectedText = selection.toString().trim();
 
-    const range = selection.getRangeAt(0);
-    const selectedText = selection.toString().trim();
+      if (selectedText.length > 0) {
+        const container = document.createElement("div");
+        container.appendChild(range.cloneContents());
+        const selectedHtml = container.innerHTML;
 
-    if (selectedText.length > 0) {
-      const container = document.createElement("div");
-      container.appendChild(range.cloneContents());
-      const selectedHtml = container.innerHTML;
-
-      showTooltip(e.clientX + 15, e.clientY + 10, selectedText, selectedHtml, data.textList);
+        chrome.storage.local.get({ textList: [] }, (data) => {
+          showTooltip(e.clientX + 15, e.clientY + 10, selectedText, selectedHtml, data.textList);
+        });
+      }
     }
   });
 });
@@ -46,26 +48,28 @@ document.addEventListener("keydown", (e) => {
 
     // Berikan jeda waktu agar seleksi teks selesai diperbarui oleh browser
     setTimeout(() => {
-      chrome.storage.local.get({ enabled: true, textList: [] }, (data) => {
-        if (!data.enabled) return;
+      chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
+        if (response && response.isActive) {
+          const selection = window.getSelection();
+          if (selection.rangeCount === 0) return;
 
-        const selection = window.getSelection();
-        if (selection.rangeCount === 0) return;
+          const range = selection.getRangeAt(0);
+          const selectedText = selection.toString().trim();
 
-        const range = selection.getRangeAt(0);
-        const selectedText = selection.toString().trim();
+          if (selectedText.length > 0) {
+            const container = document.createElement("div");
+            container.appendChild(range.cloneContents());
+            const selectedHtml = container.innerHTML;
 
-        if (selectedText.length > 0) {
-          const container = document.createElement("div");
-          container.appendChild(range.cloneContents());
-          const selectedHtml = container.innerHTML;
+            // Mengatur posisi tooltip di tengah atas viewport (koordinat fixed)
+            const tooltipWidth = 220; // Estimasi lebar minimum tooltip
+            const x = (window.innerWidth / 2) - (tooltipWidth / 2);
+            const y = 80; // Ditampilkan 80px di bawah batas atas viewport layar saat ini
 
-          // Mengatur posisi tooltip di tengah atas viewport (koordinat fixed)
-          const tooltipWidth = 220; // Estimasi lebar minimum tooltip
-          const x = (window.innerWidth / 2) - (tooltipWidth / 2);
-          const y = 80; // Ditampilkan 80px di bawah batas atas viewport layar saat ini
-
-          showTooltip(x, y, selectedText, selectedHtml, data.textList);
+            chrome.storage.local.get({ textList: [] }, (data) => {
+              showTooltip(x, y, selectedText, selectedHtml, data.textList);
+            });
+          }
         }
       });
     }, 50);
@@ -249,9 +253,13 @@ function removeTooltip() {
   }
 }
 
-// Pantau perubahan status enabled untuk langsung menghapus tooltip jika dinonaktifkan
+// Pantau perubahan status keaktifan di storage untuk langsung menyinkronkan & menghapus tooltip jika tidak aktif
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === "local" && changes.enabled && changes.enabled.newValue === false) {
-    removeTooltip();
+  if (namespace === "local") {
+    chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
+      if (response && !response.isActive) {
+        removeTooltip();
+      }
+    });
   }
 });

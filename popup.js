@@ -1,6 +1,6 @@
 /**
  * Smart Multi-Copy Highlight - Popup Script
- * Mengontrol logika tampilan antrean teks, aksi salin, dan toggle On/Off.
+ * Mengontrol logika tampilan antrean teks, aksi salin, dan manajemen mode keaktifan (Global/Per-Tab/Off).
  * 
  * Crafted by lncln
  */
@@ -9,39 +9,114 @@ document.addEventListener("DOMContentLoaded", () => {
   const listContainer = document.getElementById("listContainer");
   const clearBtn = document.getElementById("clearBtn");
   const copyAllBtn = document.getElementById("copyAllBtn");
-  const enableToggle = document.getElementById("enableToggle");
-  const statusText = document.getElementById("statusText");
+  const globalStatus = document.getElementById("globalStatus");
+  
+  // Element kontrol mode
+  const modeGlobal = document.getElementById("modeGlobal");
+  const modeTab = document.getElementById("modeTab");
+  const modeOff = document.getElementById("modeOff");
+  const tabStatusCard = document.getElementById("tabStatusCard");
+  const tabToggle = document.getElementById("tabToggle");
+  const tabUrlDesc = document.getElementById("tabUrlDesc");
 
-  // Memuat status aktif (enabled) dari penyimpanan lokal
-  chrome.storage.local.get({ enabled: true }, (data) => {
-    if (enableToggle) {
-      enableToggle.checked = data.enabled;
+  // Dapatkan detail tab saat ini untuk kontrol status per-tab
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const currentTab = tabs[0];
+    if (!currentTab) return;
+    const tabId = currentTab.id;
+
+    // Tampilkan alamat host/judul tab saat ini pada kartu per-tab
+    try {
+      const urlObj = new URL(currentTab.url);
+      tabUrlDesc.innerText = urlObj.hostname || currentTab.title || "Tab saat ini";
+    } catch (e) {
+      tabUrlDesc.innerText = currentTab.title || "Tab saat ini";
     }
-    updateStatusLabel(data.enabled);
+
+    // Memuat status konfigurasi awal dari storage
+    chrome.storage.local.get({
+      enabled: true,
+      mode: "global",
+      activeTabIds: {}
+    }, (data) => {
+      updateUI(data.enabled, data.mode, data.activeTabIds, tabId);
+    });
+
+    // Event handler: Pilihan Mode Semua Tab
+    modeGlobal.onclick = () => {
+      chrome.storage.local.set({ enabled: true, mode: "global" }, () => {
+        chrome.storage.local.get(null, (data) => {
+          updateUI(true, "global", data.activeTabIds, tabId);
+        });
+      });
+    };
+
+    // Event handler: Pilihan Mode Per Tab
+    modeTab.onclick = () => {
+      chrome.storage.local.get({ activeTabIds: {} }, (data) => {
+        const newActiveTabIds = { ...data.activeTabIds };
+        // Otomatis aktifkan tab saat ini ketika mode ini dipilih pertama kali
+        newActiveTabIds[tabId] = true;
+        chrome.storage.local.set({
+          enabled: true,
+          mode: "tab",
+          activeTabIds: newActiveTabIds
+        }, () => {
+          updateUI(true, "tab", newActiveTabIds, tabId);
+        });
+      });
+    };
+
+    // Event handler: Pilihan Mode Matikan (Nonaktif)
+    modeOff.onclick = () => {
+      chrome.storage.local.set({ enabled: false }, () => {
+        chrome.storage.local.get(null, (data) => {
+          updateUI(false, data.mode, data.activeTabIds, tabId);
+        });
+      });
+    };
+
+    // Event handler: Switch toggle keaktifan tab saat ini
+    tabToggle.onchange = () => {
+      chrome.storage.local.get({ activeTabIds: {} }, (data) => {
+        const newActiveTabIds = { ...data.activeTabIds };
+        newActiveTabIds[tabId] = tabToggle.checked;
+        chrome.storage.local.set({ activeTabIds: newActiveTabIds });
+      });
+    };
   });
 
-  // Handler saat switch toggle diaktifkan atau dinonaktifkan
-  if (enableToggle) {
-    enableToggle.addEventListener("change", () => {
-      const isEnabled = enableToggle.checked;
-      chrome.storage.local.set({ enabled: isEnabled }, () => {
-        updateStatusLabel(isEnabled);
-      });
-    });
-  }
-
   /**
-   * Memperbarui label teks status aktif di header popup.
-   * @param {boolean} isEnabled - Status aktif ekstensi.
+   * Memperbarui antarmuka (UI) popup sesuai status konfigurasi aktif.
+   * @param {boolean} enabled - Status aktif global.
+   * @param {string} mode - Mode aktif ("global" atau "tab").
+   * @param {Object} activeTabIds - Daftar ID tab yang aktif.
+   * @param {number} tabId - ID tab saat ini.
    */
-  function updateStatusLabel(isEnabled) {
-    if (!statusText) return;
-    if (isEnabled) {
-      statusText.innerText = "Active";
-      statusText.classList.add("enabled");
+  function updateUI(enabled, mode, activeTabIds, tabId) {
+    // Bersihkan kelas aktif dari seluruh tombol mode
+    modeGlobal.classList.remove("active");
+    modeTab.classList.remove("active");
+    modeOff.classList.remove("active");
+
+    if (!enabled) {
+      modeOff.classList.add("active");
+      globalStatus.innerText = "Inactive";
+      globalStatus.classList.add("off");
+      tabStatusCard.classList.add("hidden");
     } else {
-      statusText.innerText = "Inactive";
-      statusText.classList.remove("enabled");
+      globalStatus.innerText = "Active";
+      globalStatus.classList.remove("off");
+      
+      if (mode === "global") {
+        modeGlobal.classList.add("active");
+        tabStatusCard.classList.add("hidden");
+      } else {
+        modeTab.classList.add("active");
+        tabStatusCard.classList.remove("hidden");
+        // Set toggle switch tab ini sesuai statusnya di storage
+        tabToggle.checked = !!activeTabIds[tabId];
+      }
     }
   }
 
