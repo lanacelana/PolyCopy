@@ -1,235 +1,279 @@
 /**
  * Smart Multi-Copy Highlight - Popup Script
- * Mengontrol logika tampilan antrean teks, aksi salin, dan manajemen mode keaktifan (Global/Per-Tab/Off).
+ * Controls the queue list UI, copy actions, and global/per-tab activation settings.
  * 
  * Crafted by lncln
  */
 
-document.addEventListener("DOMContentLoaded", () => {
-  const listContainer = document.getElementById("listContainer");
-  const clearBtn = document.getElementById("clearBtn");
-  const copyAllBtn = document.getElementById("copyAllBtn");
-  const globalStatus = document.getElementById("globalStatus");
-  
-  // Element kontrol mode
-  const modeGlobal = document.getElementById("modeGlobal");
-  const modeTab = document.getElementById("modeTab");
-  const modeOff = document.getElementById("modeOff");
-  const tabStatusCard = document.getElementById("tabStatusCard");
-  const tabToggle = document.getElementById("tabToggle");
-  const tabUrlDesc = document.getElementById("tabUrlDesc");
+(function () {
+  'use strict';
 
-  // Dapatkan detail tab saat ini untuk kontrol status per-tab
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const currentTab = tabs[0];
-    if (!currentTab) return;
-    const tabId = currentTab.id;
+  document.addEventListener("DOMContentLoaded", () => {
+    const listContainer = document.getElementById("listContainer");
+    const clearBtn = document.getElementById("clearBtn");
+    const copyAllBtn = document.getElementById("copyAllBtn");
+    const globalStatus = document.getElementById("globalStatus");
+    
+    // Mode selection elements
+    const modeGlobal = document.getElementById("modeGlobal");
+    const modeTab = document.getElementById("modeTab");
+    const modeOff = document.getElementById("modeOff");
+    const tabStatusCard = document.getElementById("tabStatusCard");
+    const tabToggle = document.getElementById("tabToggle");
+    const tabUrlDesc = document.getElementById("tabUrlDesc");
 
-    // Tampilkan alamat host/judul tab saat ini pada kartu per-tab
-    try {
-      const urlObj = new URL(currentTab.url);
-      tabUrlDesc.innerText = urlObj.hostname || currentTab.title || "This tab, mate";
-    } catch (e) {
-      tabUrlDesc.innerText = currentTab.title || "This tab, mate";
-    }
+    // Retrieve active tab details on load
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (chrome.runtime.lastError) return;
+      
+      const currentTab = tabs[0];
+      if (!currentTab) return;
+      const tabId = currentTab.id;
 
-    // Memuat status konfigurasi awal dari storage
-    chrome.storage.local.get({
-      enabled: true,
-      mode: "global",
-      activeTabIds: {}
-    }, (data) => {
-      updateUI(data.enabled, data.mode, data.activeTabIds, tabId);
+      // Extract and display the active hostname or title
+      if (tabUrlDesc) {
+        try {
+          const urlObj = new URL(currentTab.url);
+          tabUrlDesc.textContent = urlObj.hostname || currentTab.title || "This tab, mate";
+        } catch (e) {
+          tabUrlDesc.textContent = currentTab.title || "This tab, mate";
+        }
+      }
+
+      // Load configuration status from storage
+      chrome.storage.local.get({
+        enabled: true,
+        mode: "global",
+        activeTabIds: {}
+      }, (data) => {
+        if (chrome.runtime.lastError) return;
+        updateUI(data.enabled, data.mode, data.activeTabIds, tabId);
+      });
+
+      // Mode handlers
+      if (modeGlobal) {
+        modeGlobal.onclick = () => {
+          chrome.storage.local.set({ enabled: true, mode: "global" }, () => {
+            if (chrome.runtime.lastError) return;
+            chrome.storage.local.get(null, (data) => {
+              if (chrome.runtime.lastError) return;
+              updateUI(true, "global", data.activeTabIds, tabId);
+            });
+          });
+        };
+      }
+
+      if (modeTab) {
+        modeTab.onclick = () => {
+          chrome.storage.local.get({ activeTabIds: {} }, (data) => {
+            if (chrome.runtime.lastError) return;
+            const newActiveTabIds = { ...data.activeTabIds };
+            newActiveTabIds[tabId] = true; // Auto-activate for current tab
+            chrome.storage.local.set({
+              enabled: true,
+              mode: "tab",
+              activeTabIds: newActiveTabIds
+            }, () => {
+              if (chrome.runtime.lastError) return;
+              updateUI(true, "tab", newActiveTabIds, tabId);
+            });
+          });
+        };
+      }
+
+      if (modeOff) {
+        modeOff.onclick = () => {
+          chrome.storage.local.set({ enabled: false }, () => {
+            if (chrome.runtime.lastError) return;
+            chrome.storage.local.get(null, (data) => {
+              if (chrome.runtime.lastError) return;
+              updateUI(false, data.mode, data.activeTabIds, tabId);
+            });
+          });
+        };
+      }
+
+      if (tabToggle) {
+        tabToggle.onchange = () => {
+          chrome.storage.local.get({ activeTabIds: {} }, (data) => {
+            if (chrome.runtime.lastError) return;
+            const newActiveTabIds = { ...data.activeTabIds };
+            newActiveTabIds[tabId] = tabToggle.checked;
+            chrome.storage.local.set({ activeTabIds: newActiveTabIds });
+          });
+        };
+      }
     });
 
-    // Event handler: Pilihan Mode Semua Tab
-    modeGlobal.onclick = () => {
-      chrome.storage.local.set({ enabled: true, mode: "global" }, () => {
-        chrome.storage.local.get(null, (data) => {
-          updateUI(true, "global", data.activeTabIds, tabId);
-        });
-      });
-    };
+    /**
+     * Updates the popup's configuration controls and status badges.
+     * @param {boolean} enabled - Whether the extension is globally active.
+     * @param {string} mode - The active mode ("global" or "tab").
+     * @param {Object} activeTabIds - Map of active tab IDs.
+     * @param {number} tabId - Current active tab ID.
+     */
+    const updateUI = (enabled, mode, activeTabIds, tabId) => {
+      // Deactivate active states across all mode selector buttons
+      [modeGlobal, modeTab, modeOff].forEach(btn => btn?.classList.remove("active"));
 
-    // Event handler: Pilihan Mode Per Tab
-    modeTab.onclick = () => {
-      chrome.storage.local.get({ activeTabIds: {} }, (data) => {
-        const newActiveTabIds = { ...data.activeTabIds };
-        // Otomatis aktifkan tab saat ini ketika mode ini dipilih pertama kali
-        newActiveTabIds[tabId] = true;
-        chrome.storage.local.set({
-          enabled: true,
-          mode: "tab",
-          activeTabIds: newActiveTabIds
-        }, () => {
-          updateUI(true, "tab", newActiveTabIds, tabId);
-        });
-      });
-    };
-
-    // Event handler: Pilihan Mode Matikan (Nonaktif)
-    modeOff.onclick = () => {
-      chrome.storage.local.set({ enabled: false }, () => {
-        chrome.storage.local.get(null, (data) => {
-          updateUI(false, data.mode, data.activeTabIds, tabId);
-        });
-      });
-    };
-
-    // Event handler: Switch toggle keaktifan tab saat ini
-    tabToggle.onchange = () => {
-      chrome.storage.local.get({ activeTabIds: {} }, (data) => {
-        const newActiveTabIds = { ...data.activeTabIds };
-        newActiveTabIds[tabId] = tabToggle.checked;
-        chrome.storage.local.set({ activeTabIds: newActiveTabIds });
-      });
-    };
-  });
-
-  /**
-   * Memperbarui antarmuka (UI) popup sesuai status konfigurasi aktif.
-   * @param {boolean} enabled - Status aktif global.
-   * @param {string} mode - Mode aktif ("global" atau "tab").
-   * @param {Object} activeTabIds - Daftar ID tab yang aktif.
-   * @param {number} tabId - ID tab saat ini.
-   */
-  function updateUI(enabled, mode, activeTabIds, tabId) {
-    // Bersihkan kelas aktif dari seluruh tombol mode
-    modeGlobal.classList.remove("active");
-    modeTab.classList.remove("active");
-    modeOff.classList.remove("active");
-
-    if (!enabled) {
-      modeOff.classList.add("active");
-      globalStatus.innerText = "No Go";
-      globalStatus.classList.add("off");
-      tabStatusCard.classList.add("hidden");
-    } else {
-      globalStatus.innerText = "Sweet As";
-      globalStatus.classList.remove("off");
-      
-      if (mode === "global") {
-        modeGlobal.classList.add("active");
-        tabStatusCard.classList.add("hidden");
+      if (!enabled) {
+        modeOff?.classList.add("active");
+        if (globalStatus) {
+          globalStatus.textContent = "No Go";
+          globalStatus.classList.add("off");
+        }
+        tabStatusCard?.classList.add("hidden");
       } else {
-        modeTab.classList.add("active");
-        tabStatusCard.classList.remove("hidden");
-        // Set toggle switch tab ini sesuai statusnya di storage
-        tabToggle.checked = !!activeTabIds[tabId];
+        if (globalStatus) {
+          globalStatus.textContent = "Sweet As";
+          globalStatus.classList.remove("off");
+        }
+        
+        if (mode === "global") {
+          modeGlobal?.classList.add("active");
+          tabStatusCard?.classList.add("hidden");
+        } else {
+          modeTab?.classList.add("active");
+          tabStatusCard?.classList.remove("hidden");
+          if (tabToggle) {
+            tabToggle.checked = !!activeTabIds[tabId];
+          }
+        }
       }
-    }
-  }
+    };
 
-  /**
-   * Me-render daftar item teks yang telah disimpan.
-   */
-  function renderList() {
-    chrome.storage.local.get({ textList: [] }, (data) => {
-      if (!listContainer) return;
-      listContainer.innerHTML = "";
-      
-      if (data.textList.length === 0) {
-        listContainer.innerHTML = "<div style='color:var(--text-muted); text-align:center; padding: 10px;'>Nothing here yet, mate. Grab some text!</div>";
+    /**
+     * Writes compiled queue content (plain text + HTML) to the system clipboard.
+     * @param {Array} list - The list of queue items.
+     * @param {Function} [callback] - Function to execute on success.
+     */
+    const writeListToClipboard = (list, callback) => {
+      if (list.length === 0) {
+        navigator.clipboard.writeText("").then(callback).catch(err => {
+          console.error("[Popup] Clipboard clear error:", err);
+          if (callback) callback();
+        });
         return;
       }
 
-      data.textList.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.className = "text-item";
-        if (item.type === "link") {
-          div.classList.add("type-link");
+      const combinedPlain = list.map(item => item.plain).join("");
+      const combinedHtml = list.map(item => item.html).join("");
+
+      const blobPlain = new Blob([combinedPlain], { type: "text/plain" });
+      const blobHtml = new Blob([combinedHtml], { type: "text/html" });
+
+      const clipboardData = [
+        new ClipboardItem({
+          "text/plain": blobPlain,
+          "text/html": blobHtml
+        })
+      ];
+
+      navigator.clipboard.write(clipboardData)
+        .then(callback)
+        .catch(err => {
+          console.error("[Popup] Clipboard write error:", err);
+          if (callback) callback();
+        });
+    };
+
+    /**
+     * Renders the stored text list in the popup container.
+     */
+    const renderList = () => {
+      chrome.storage.local.get({ textList: [] }, (data) => {
+        if (chrome.runtime.lastError) return;
+        if (!listContainer) return;
+        
+        listContainer.innerHTML = "";
+        
+        if (data.textList.length === 0) {
+          listContainer.innerHTML = `
+            <div style="color: var(--text-muted); text-align: center; padding: 10px;">
+              Nothing here yet, mate. Grab some text!
+            </div>
+          `;
+          return;
         }
 
-        const textSpan = document.createElement("span");
-        textSpan.className = "text-content";
+        data.textList.forEach((item, index) => {
+          const div = document.createElement("div");
+          div.className = "text-item";
+          if (item.type === "link") {
+            div.classList.add("type-link");
+          }
 
-        // Bersihkan prefix "Source: ..." jika ada agar teks asli tampil di awal list
-        const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
-        textSpan.innerText = `${index + 1}. ${cleanText}`;
-        textSpan.title = cleanText;
+          const textSpan = document.createElement("span");
+          textSpan.className = "text-content";
 
-        const delBtn = document.createElement("button");
-        delBtn.className = "delete-btn";
-        delBtn.innerHTML = "×";
-        delBtn.onclick = () => {
-          deleteItem(index);
-        };
+          const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
+          textSpan.textContent = `${index + 1}. ${cleanText}`;
+          textSpan.title = cleanText;
 
-        div.appendChild(textSpan);
-        div.appendChild(delBtn);
-        listContainer.appendChild(div);
-      });
-    });
-  }
+          const delBtn = document.createElement("button");
+          delBtn.className = "delete-btn";
+          delBtn.innerHTML = "×";
+          delBtn.onclick = () => {
+            deleteItem(index);
+          };
 
-  /**
-   * Menghapus item tertentu dari daftar antrean.
-   * @param {number} index - Indeks item yang akan dihapus.
-   */
-  function deleteItem(index) {
-    chrome.storage.local.get({ textList: [] }, (data) => {
-      const newList = [...data.textList];
-      newList.splice(index, 1);
-      chrome.storage.local.set({ textList: newList }, () => {
-        // Sinkronisasi clipboard sistem setelah item dihapus
-        updatePopupClipboard(newList, () => {
-          renderList();
-        });
-      });
-    });
-  }
-
-  // Event handler untuk tombol hapus semua item
-  if (clearBtn) {
-    clearBtn.onclick = () => {
-      chrome.storage.local.set({ textList: [] }, () => {
-        navigator.clipboard.writeText("").then(() => {
-          renderList();
+          div.appendChild(textSpan);
+          div.appendChild(delBtn);
+          listContainer.appendChild(div);
         });
       });
     };
-  }
 
-  // Event handler untuk menyalin seluruh daftar antrean ke clipboard
-  if (copyAllBtn) {
-    copyAllBtn.onclick = () => {
+    /**
+     * Removes an item from the queue list.
+     * @param {number} index - Index of the item to delete.
+     */
+    const deleteItem = (index) => {
       chrome.storage.local.get({ textList: [] }, (data) => {
-        if (data.textList.length === 0) return;
-        updatePopupClipboard(data.textList, () => {
-          copyAllBtn.innerText = "Grabbed the lot, mate!";
-          setTimeout(() => { copyAllBtn.innerText = "Grab the Lot"; }, 1500);
+        if (chrome.runtime.lastError) return;
+        
+        const newList = [...data.textList];
+        newList.splice(index, 1);
+
+        chrome.storage.local.set({ textList: newList }, () => {
+          if (chrome.runtime.lastError) return;
+          writeListToClipboard(newList, () => {
+            renderList();
+          });
         });
       });
     };
-  }
 
-  /**
-   * Menulis gabungan teks plain dan HTML ke sistem clipboard.
-   * @param {Array} list - Daftar item yang disalin.
-   * @param {Function} callback - Fungsi callback setelah salin berhasil.
-   */
-  function updatePopupClipboard(list, callback) {
-    if (list.length === 0) {
-      navigator.clipboard.writeText("").then(callback);
-      return;
+    // Global clear button handler
+    if (clearBtn) {
+      clearBtn.onclick = () => {
+        chrome.storage.local.set({ textList: [] }, () => {
+          if (chrome.runtime.lastError) return;
+          navigator.clipboard.writeText("").then(() => {
+            renderList();
+          });
+        });
+      };
     }
-    const combinedPlain = list.map(item => item.plain).join("");
-    const combinedHtml = list.map(item => item.html).join("");
 
-    const blobPlain = new Blob([combinedPlain], { type: "text/plain" });
-    const blobHtml = new Blob([combinedHtml], { type: "text/html" });
+    // Global copy all button handler
+    if (copyAllBtn) {
+      copyAllBtn.onclick = () => {
+        chrome.storage.local.get({ textList: [] }, (data) => {
+          if (chrome.runtime.lastError) return;
+          if (data.textList.length === 0) return;
 
-    const clipboardData = [new ClipboardItem({
-      "text/plain": blobPlain,
-      "text/html": blobHtml
-    })];
+          writeListToClipboard(data.textList, () => {
+            copyAllBtn.textContent = "Grabbed the lot, mate!";
+            setTimeout(() => {
+              copyAllBtn.textContent = "Grab the Lot";
+            }, 1500);
+          });
+        });
+      };
+    }
 
-    navigator.clipboard.write(clipboardData).then(callback).catch(err => {
-      console.error("Gagal memperbarui clipboard:", err);
-      if (callback) callback();
-    });
-  }
-
-  // Tampilkan antrean teks saat popup pertama kali dibuka
-  renderList();
-});
+    // Initialize list load on open
+    renderList();
+  });
+})();
