@@ -31,7 +31,7 @@
   border: 1px solid var(--border-item);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
   font-size: 13px;
-  min-width: 200px;
+  min-width: 240px;
   backdrop-filter: blur(8px);
   
   /* Mencegah teks menu ikut terseleksi/ter-highlight saat Ctrl+A */
@@ -63,8 +63,9 @@
 /* Desain Kapsul & Tombol Bulat */
 .smart-copy-tooltip .btn-pill {
   border-radius: 30px;
-  padding: 0 16px;
+  padding: 0 10px;
   letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .smart-copy-tooltip .btn-circle {
