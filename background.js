@@ -86,8 +86,18 @@ function updateBadgeForTab(tabId) {
     // Hapus teks badge "OFF" atau "ON" agar tampilan toolbar bersih
     chrome.action.setBadgeText({ text: "" });
 
-    const activePath = "icon_active.png";
-    const inactivePath = "icon_inactive.png";
+    const activePath = {
+      "16": "icon_active_16.png",
+      "32": "icon_active_32.png",
+      "48": "icon_active_48.png",
+      "128": "icon_active_128.png"
+    };
+    const inactivePath = {
+      "16": "icon_inactive_16.png",
+      "32": "icon_inactive_32.png",
+      "48": "icon_inactive_48.png",
+      "128": "icon_inactive_128.png"
+    };
 
     if (!data.enabled) {
       // Nonaktif secara global: Setel ikon default global dan tab spesifik ke grayscale

@@ -19,10 +19,18 @@
     }
   ],
   "icons": {
-    "128": "icon_active.png"
+    "16": "icon_active_16.png",
+    "32": "icon_active_32.png",
+    "48": "icon_active_48.png",
+    "128": "icon_active_128.png"
   },
   "action": {
-    "default_icon": "icon_active.png",
+    "default_icon": {
+      "16": "icon_active_16.png",
+      "32": "icon_active_32.png",
+      "48": "icon_active_48.png",
+      "128": "icon_active_128.png"
+    },
     "default_popup": "popup.html"
   }
 }
