@@ -29,7 +29,7 @@
   border-radius: 16px;
   box-shadow: var(--shadow);
   border: 1px solid var(--border-item);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
   min-width: 240px;
   backdrop-filter: blur(8px);
