@@ -86,22 +86,31 @@ function updateBadgeForTab(tabId) {
     // Hapus teks badge "OFF" atau "ON" agar tampilan toolbar bersih
     chrome.action.setBadgeText({ text: "" });
 
+    const activePath = { "128": "icon_active.png" };
+    const inactivePath = { "128": "icon_inactive.png" };
+
     if (!data.enabled) {
-      // Nonaktif secara global: Setel ikon default ke grayscale
-      chrome.action.setIcon({ path: "icon_inactive.png" });
+      // Nonaktif secara global: Setel ikon default global dan tab spesifik ke grayscale
+      chrome.action.setIcon({ path: inactivePath });
+      if (tabId) {
+        chrome.action.setIcon({ path: inactivePath, tabId: tabId });
+      }
     } else if (data.mode === "global") {
-      // Aktif secara global: Setel ikon default ke berwarna (Acid Forest)
-      chrome.action.setIcon({ path: "icon_active.png" });
+      // Aktif secara global: Setel ikon default global dan tab spesifik ke berwarna
+      chrome.action.setIcon({ path: activePath });
+      if (tabId) {
+        chrome.action.setIcon({ path: activePath, tabId: tabId });
+      }
     } else {
-      // Mode per-tab: Setel ikon default ke grayscale
-      chrome.action.setIcon({ path: "icon_inactive.png" });
+      // Mode per-tab: Setel ikon default global ke grayscale
+      chrome.action.setIcon({ path: inactivePath });
       
       // Setel ikon spesifik untuk tab saat ini berdasarkan status aktifnya
       const isTabActive = !!data.activeTabIds[tabId];
       if (isTabActive) {
-        chrome.action.setIcon({ path: "icon_active.png", tabId: tabId });
+        chrome.action.setIcon({ path: activePath, tabId: tabId });
       } else {
-        chrome.action.setIcon({ path: "icon_inactive.png", tabId: tabId });
+        chrome.action.setIcon({ path: inactivePath, tabId: tabId });
       }
     }
   });
