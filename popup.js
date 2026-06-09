@@ -64,8 +64,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const textSpan = document.createElement("span");
         textSpan.className = "text-content";
-        textSpan.innerText = `${index + 1}. ${item.plain}`;
-        textSpan.title = item.plain;
+
+        // Bersihkan prefix "Source: ..." jika ada agar teks asli tampil di awal list
+        const cleanText = item.plain.replace(/^Source: .*?\n/, "").trim();
+        textSpan.innerText = `${index + 1}. ${cleanText}`;
+        textSpan.title = cleanText;
 
         const delBtn = document.createElement("button");
         delBtn.className = "delete-btn";

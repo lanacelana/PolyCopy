@@ -98,14 +98,13 @@ function showTooltip(x, y, plainText, htmlText, textList) {
       listItem.className = "tooltip-list-item";
       const itemText = document.createElement("span");
       
-      if (item.type === "link") {
-        linkCounter++;
-        itemText.innerText = `Link ${linkCounter}`;
-      } else {
-        textCounter++;
-        itemText.innerText = `Text ${textCounter}`;
-      }
-      itemText.title = item.plain;
+      // Ambil kata pertama dari teks (abaikan URL sumber jika itu bertipe link)
+      const cleanText = item.plain.replace(/^Source: .*?\n/, "").trim();
+      const firstWord = cleanText.split(/\s+/)[0] || "";
+      const prefix = item.type === "link" ? "🔗 " : "📝 ";
+
+      itemText.innerText = `${prefix}${firstWord}...`;
+      itemText.title = cleanText;
 
       const btnDelete = document.createElement("button");
       btnDelete.className = "tooltip-delete-btn";
