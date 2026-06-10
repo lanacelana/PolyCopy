@@ -134,6 +134,7 @@
    * @param {string} plainText - Selected plain text.
    * @param {string} htmlText - Selected HTML text.
    * @param {Array} textList - List of currently stored items.
+   * @param {boolean} [isMouseSelection=false] - Whether the positioning is based on mouse coordinates.
    */
   const showTooltip = (x, y, plainText, htmlText, textList, isMouseSelection = false) => {
     // Ensure body exists before injecting
