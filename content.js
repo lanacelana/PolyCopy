@@ -135,14 +135,14 @@
    * @param {string} htmlText - Selected HTML text.
    * @param {Array} textList - List of currently stored items.
    */
-  const showTooltip = (x, y, plainText, htmlText, textList) => {
+  const showTooltip = (x, y, plainText, htmlText, textList, isMouseSelection = false) => {
     // Ensure body exists before injecting
     if (!document.body) return;
 
     currentTooltip = document.createElement("div");
     currentTooltip.className = "smart-copy-tooltip";
-    currentTooltip.style.left = `${x}px`;
-    currentTooltip.style.top = `${y}px`;
+    currentTooltip.style.left = "-9999px";
+    currentTooltip.style.top = "-9999px";
 
     // Render list container if there are items in the queue
     if (textList.length > 0) {
@@ -247,27 +247,43 @@
     const rect = currentTooltip.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const padding = 12; // Safety margin from screen edges
+    
+    // Safety margin from screen edges: 12px for sides/top, 85px for bottom (to clear taskbars/dock)
+    const paddingX = 12;
+    const paddingYTop = 12;
+    const paddingYBottom = 85;
 
     let adjustedX = x;
     let adjustedY = y;
 
-    // Check right edge overflow
-    if (x + rect.width > viewportWidth) {
-      adjustedX = viewportWidth - rect.width - padding;
-    }
-    // Check left edge overflow
-    if (adjustedX < padding) {
-      adjustedX = padding;
+    if (isMouseSelection) {
+      // Offset slightly to the right of cursor
+      adjustedX = x + 15;
+      
+      // Smart vertical positioning: place above cursor if in bottom half of screen, otherwise below
+      if (y > viewportHeight / 2) {
+        adjustedY = y - rect.height - 15;
+      } else {
+        adjustedY = y + 15;
+      }
     }
 
-    // Check bottom edge overflow
-    if (y + rect.height > viewportHeight) {
-      adjustedY = viewportHeight - rect.height - padding;
+    // Check right edge overflow
+    if (adjustedX + rect.width > viewportWidth - paddingX) {
+      adjustedX = viewportWidth - rect.width - paddingX;
+    }
+    // Check left edge overflow
+    if (adjustedX < paddingX) {
+      adjustedX = paddingX;
+    }
+
+    // Check bottom edge overflow (with larger taskbar/dock safety margin)
+    if (adjustedY + rect.height > viewportHeight - paddingYBottom) {
+      adjustedY = viewportHeight - rect.height - paddingYBottom;
     }
     // Check top edge overflow
-    if (adjustedY < padding) {
-      adjustedY = padding;
+    if (adjustedY < paddingYTop) {
+      adjustedY = paddingYTop;
     }
 
     currentTooltip.style.left = `${adjustedX}px`;
@@ -304,7 +320,7 @@
 
       chrome.storage.local.get({ textList: [] }, (data) => {
         if (chrome.runtime.lastError) return;
-        showTooltip(e.clientX + 15, e.clientY + 10, selectedText, selectedHtml, data.textList);
+        showTooltip(e.clientX, e.clientY, selectedText, selectedHtml, data.textList, true);
       });
     });
   }, true);
