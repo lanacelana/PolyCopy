@@ -289,6 +289,78 @@
 
     currentTooltip.style.left = `${adjustedX}px`;
     currentTooltip.style.top = `${adjustedY}px`;
+
+    // --- DRAGGING LOGIC ---
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+
+    const onMouseDown = (e) => {
+      // Only handle left clicks
+      if (e.button !== 0) return;
+
+      // Do not initiate drag if user clicked an interactive element (buttons, links, delete cross)
+      if (e.target.closest("button") || e.target.closest("a") || e.target.closest(".tooltip-delete-btn")) {
+        return;
+      }
+
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const currentRect = currentTooltip.getBoundingClientRect();
+      initialLeft = currentRect.left;
+      initialTop = currentRect.top;
+
+      document.addEventListener("mousemove", onMouseMove, { capture: true });
+      document.addEventListener("mouseup", onMouseUp, { capture: true });
+
+      // Prevent text selection highlight while dragging
+      e.preventDefault();
+    };
+
+    const onMouseMove = (e) => {
+      if (!isDragging || !currentTooltip) return;
+
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      let newLeft = initialLeft + deltaX;
+      let newTop = initialTop + deltaY;
+
+      const currentRect = currentTooltip.getBoundingClientRect();
+      const currentViewportWidth = window.innerWidth;
+      const currentViewportHeight = window.innerHeight;
+      const padX = 12;
+      const padYTop = 12;
+      const padYBottom = 85; // Avoid taskbar/dock
+
+      // Clamp coordinates within the viewport boundaries
+      if (newLeft < padX) {
+        newLeft = padX;
+      } else if (newLeft + currentRect.width > currentViewportWidth - padX) {
+        newLeft = currentViewportWidth - currentRect.width - padX;
+      }
+
+      if (newTop < padYTop) {
+        newTop = padYTop;
+      } else if (newTop + currentRect.height > currentViewportHeight - padYBottom) {
+        newTop = currentViewportHeight - currentRect.height - padYBottom;
+      }
+
+      currentTooltip.style.left = `${newLeft}px`;
+      currentTooltip.style.top = `${newTop}px`;
+    };
+
+    const onMouseUp = () => {
+      isDragging = false;
+      document.removeEventListener("mousemove", onMouseMove, { capture: true });
+      document.removeEventListener("mouseup", onMouseUp, { capture: true });
+    };
+
+    currentTooltip.addEventListener("mousedown", onMouseDown);
   };
 
   // Event listener for mouseup (normal click-drag selection) - captures early
