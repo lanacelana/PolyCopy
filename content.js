@@ -242,6 +242,36 @@
     buttonRow.appendChild(btnClearAll);
     currentTooltip.appendChild(buttonRow);
     document.body.appendChild(currentTooltip);
+
+    // Adjust position to keep the tooltip fully visible within the viewport boundaries
+    const rect = currentTooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const padding = 12; // Safety margin from screen edges
+
+    let adjustedX = x;
+    let adjustedY = y;
+
+    // Check right edge overflow
+    if (x + rect.width > viewportWidth) {
+      adjustedX = viewportWidth - rect.width - padding;
+    }
+    // Check left edge overflow
+    if (adjustedX < padding) {
+      adjustedX = padding;
+    }
+
+    // Check bottom edge overflow
+    if (y + rect.height > viewportHeight) {
+      adjustedY = viewportHeight - rect.height - padding;
+    }
+    // Check top edge overflow
+    if (adjustedY < padding) {
+      adjustedY = padding;
+    }
+
+    currentTooltip.style.left = `${adjustedX}px`;
+    currentTooltip.style.top = `${adjustedY}px`;
   };
 
   // Event listener for mouseup (normal click-drag selection) - captures early
