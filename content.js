@@ -43,25 +43,52 @@
       clipboardBuffer.html = sortedList.map(item => item.html).join("<br>");
     }
 
-    const onCopyHandler = (e) => {
-      e.clipboardData.setData("text/plain", clipboardBuffer.plain);
-      e.clipboardData.setData("text/html", clipboardBuffer.html);
-      e.preventDefault();
-      document.removeEventListener("copy", onCopyHandler);
+    const writeToClipboard = (callback) => {
+      // Attempt 1: Modern navigator.clipboard API (requires HTTPS & focus)
+      if (navigator.clipboard && window.isSecureContext) {
+        const blobPlain = new Blob([clipboardBuffer.plain], { type: "text/plain" });
+        const blobHtml = new Blob([clipboardBuffer.html], { type: "text/html" });
+        const clipboardItem = new ClipboardItem({
+          "text/plain": blobPlain,
+          "text/html": blobHtml
+        });
+
+        navigator.clipboard.write([clipboardItem])
+          .then(callback)
+          .catch((err) => {
+            console.debug("[Content] navigator.clipboard write failed, falling back:", err);
+            writeUsingExecCommand(callback);
+          });
+      } else {
+        writeUsingExecCommand(callback);
+      }
     };
 
-    document.addEventListener("copy", onCopyHandler);
-    document.execCommand("copy");
+    const writeUsingExecCommand = (callback) => {
+      const onCopyHandler = (e) => {
+        e.clipboardData.setData("text/plain", clipboardBuffer.plain);
+        e.clipboardData.setData("text/html", clipboardBuffer.html);
+        e.preventDefault();
+        document.removeEventListener("copy", onCopyHandler, true); // Remove in capture phase
+      };
 
-    if (!chrome.runtime?.id) return;
-    chrome.storage.local.set({ textList: newList }, () => {
-      if (chrome.runtime.lastError) return;
-      if (isRefreshAction) {
-        removeTooltip();
-        showTooltip(x, y, pText, hText, newList);
-      } else {
-        removeTooltip();
-      }
+      // Listen in capture phase to bypass website overrides
+      document.addEventListener("copy", onCopyHandler, true);
+      document.execCommand("copy");
+      if (callback) callback();
+    };
+
+    writeToClipboard(() => {
+      if (!chrome.runtime?.id) return;
+      chrome.storage.local.set({ textList: newList }, () => {
+        if (chrome.runtime.lastError) return;
+        if (isRefreshAction) {
+          removeTooltip();
+          showTooltip(x, y, pText, hText, newList);
+        } else {
+          removeTooltip();
+        }
+      });
     });
   };
 
@@ -200,7 +227,7 @@
     document.body.appendChild(currentTooltip);
   };
 
-  // Event listener for mouseup (normal click-drag selection)
+  // Event listener for mouseup (normal click-drag selection) - captures early
   document.addEventListener("mouseup", (e) => {
     if (!chrome.runtime?.id) return;
     if (e.target.closest(".smart-copy-tooltip")) return;
@@ -226,9 +253,9 @@
         });
       }
     });
-  });
+  }, true);
 
-  // Event listener for Ctrl+A / Cmd+A selection
+  // Event listener for Ctrl+A / Cmd+A selection - captures early
   document.addEventListener("keydown", (e) => {
     if (!chrome.runtime?.id) return;
 
@@ -264,7 +291,7 @@
         });
       }, 50);
     }
-  });
+  }, true);
 
   // Listen for storage changes to dismiss tooltip instantly if extension is turned off
   chrome.storage.onChanged.addListener((changes, namespace) => {
