@@ -23,6 +23,23 @@
   };
 
   /**
+   * Extracts clean HTML from a DOM Range, filtering out scripts and styles to prevent CSS pollution.
+   * @param {Range} range - The selection range.
+   * @returns {string} The cleaned HTML string.
+   */
+  const getCleanHtmlFromRange = (range) => {
+    const fragment = range.cloneContents();
+    
+    // Remove style and script tags to prevent CSS pollution and keep selection clean
+    const elementsToRemove = fragment.querySelectorAll("style, script");
+    elementsToRemove.forEach(el => el.remove());
+
+    const container = document.createElement("div");
+    container.appendChild(fragment);
+    return container.innerHTML;
+  };
+
+  /**
    * Safely updates the system clipboard and local storage.
    * @param {Array} newList - The updated list of copied items.
    * @param {boolean} [isRefreshAction=false] - Whether to redraw the tooltip after update.
@@ -247,9 +264,7 @@
       return;
     }
 
-    const container = document.createElement("div");
-    container.appendChild(range.cloneContents());
-    const selectedHtml = container.innerHTML;
+    const selectedHtml = getCleanHtmlFromRange(range);
 
     removeTooltip();
 
@@ -282,9 +297,7 @@
 
         if (selectedText.length === 0) return;
 
-        const container = document.createElement("div");
-        container.appendChild(range.cloneContents());
-        const selectedHtml = container.innerHTML;
+        const selectedHtml = getCleanHtmlFromRange(range);
 
         chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
           if (chrome.runtime.lastError || !response || !response.isActive) return;
