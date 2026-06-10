@@ -231,27 +231,36 @@
   document.addEventListener("mouseup", (e) => {
     if (!chrome.runtime?.id) return;
     if (e.target.closest(".smart-copy-tooltip")) return;
+
+    // Capture the selection SYNCHRONOUSLY before other scripts or async delays can clear it
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) {
+      removeTooltip();
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const selectedText = selection.toString().trim();
+
+    if (selectedText.length === 0) {
+      removeTooltip();
+      return;
+    }
+
+    const container = document.createElement("div");
+    container.appendChild(range.cloneContents());
+    const selectedHtml = container.innerHTML;
+
     removeTooltip();
 
+    // Verify extension status asynchronously before showing the tooltip
     chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
       if (chrome.runtime.lastError || !response || !response.isActive) return;
 
-      const selection = window.getSelection();
-      if (selection.rangeCount === 0) return;
-
-      const range = selection.getRangeAt(0);
-      const selectedText = selection.toString().trim();
-
-      if (selectedText.length > 0) {
-        const container = document.createElement("div");
-        container.appendChild(range.cloneContents());
-        const selectedHtml = container.innerHTML;
-
-        chrome.storage.local.get({ textList: [] }, (data) => {
-          if (chrome.runtime.lastError) return;
-          showTooltip(e.clientX + 15, e.clientY + 10, selectedText, selectedHtml, data.textList);
-        });
-      }
+      chrome.storage.local.get({ textList: [] }, (data) => {
+        if (chrome.runtime.lastError) return;
+        showTooltip(e.clientX + 15, e.clientY + 10, selectedText, selectedHtml, data.textList);
+      });
     });
   }, true);
 
@@ -265,29 +274,29 @@
 
       // Small delay to allow the browser to complete the selection update
       setTimeout(() => {
+        const selection = window.getSelection();
+        if (selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        const selectedText = selection.toString().trim();
+
+        if (selectedText.length === 0) return;
+
+        const container = document.createElement("div");
+        container.appendChild(range.cloneContents());
+        const selectedHtml = container.innerHTML;
+
         chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
           if (chrome.runtime.lastError || !response || !response.isActive) return;
 
-          const selection = window.getSelection();
-          if (selection.rangeCount === 0) return;
+          const tooltipWidth = 240;
+          const x = (window.innerWidth / 2) - (tooltipWidth / 2);
+          const y = 80;
 
-          const range = selection.getRangeAt(0);
-          const selectedText = selection.toString().trim();
-
-          if (selectedText.length > 0) {
-            const container = document.createElement("div");
-            container.appendChild(range.cloneContents());
-            const selectedHtml = container.innerHTML;
-
-            const tooltipWidth = 240;
-            const x = (window.innerWidth / 2) - (tooltipWidth / 2);
-            const y = 80;
-
-            chrome.storage.local.get({ textList: [] }, (data) => {
-              if (chrome.runtime.lastError) return;
-              showTooltip(x, y, selectedText, selectedHtml, data.textList);
-            });
-          }
+          chrome.storage.local.get({ textList: [] }, (data) => {
+            if (chrome.runtime.lastError) return;
+            showTooltip(x, y, selectedText, selectedHtml, data.textList);
+          });
         });
       }, 50);
     }
