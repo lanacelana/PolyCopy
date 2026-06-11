@@ -1,12 +1,18 @@
 /**
  * Smart Multi-Copy Highlight - Background Service Worker
- * Manages active/inactive state globally and per tab, and updates action icons.
+ * 
+ * Manages active/inactive state globally and per tab, updates extension toolbar icons,
+ * handles tab actions/events, and coordinates zoom factor changes.
  * 
  * Crafted by lncln
  */
 
 (function () {
   'use strict';
+
+  // ==========================================
+  // CONSTANTS & CONFIGURATION
+  // ==========================================
 
   const ICON_ACTIVE_PATH = {
     "16": "icon_active_16.png",
@@ -22,9 +28,13 @@
     "128": "icon_inactive_128.png"
   };
 
+  // ==========================================
+  // CHROME API SAFE WRAPPERS
+  // ==========================================
+
   /**
-   * Safe wrapper for chrome.action.setIcon to handle runtime errors gracefully
-   * @param {Object} details 
+   * Safe wrapper for chrome.action.setIcon to handle runtime errors gracefully.
+   * @param {Object} details - Icon configuration object.
    */
   const setExtensionIcon = (details) => {
     chrome.action.setIcon(details, () => {
@@ -36,8 +46,8 @@
   };
 
   /**
-   * Safe wrapper for chrome.action.setBadgeText to handle runtime errors gracefully
-   * @param {Object} details 
+   * Safe wrapper for chrome.action.setBadgeText to handle runtime errors gracefully.
+   * @param {Object} details - Badge text configuration object.
    */
   const setExtensionBadgeText = (details) => {
     chrome.action.setBadgeText(details, () => {
@@ -48,11 +58,15 @@
     });
   };
 
+  // ==========================================
+  // ACTION ICON STATE UPDATER
+  // ==========================================
+
   /**
-   * Updates the visual extension icon (colored/grayscale) and clears badge text for a tab.
-   * @param {number} [tabId] - ID of the tab to check.
+   * Updates the extension action icon (active color vs grayscale) and clears badge text for a tab.
+   * @param {number} [tabId] - ID of the tab to update.
    */
-  const updateBadgeForTab = (tabId) => {
+  const updateActionStateForTab = (tabId) => {
     chrome.storage.local.get({
       enabled: true,
       mode: "global",
@@ -64,26 +78,26 @@
         return;
       }
 
-      // Clear any text badges to keep the toolbar clean
+      // Clear any text badges to keep the toolbar layout clean
       setExtensionBadgeText({ text: "" });
 
       if (!data.enabled) {
-        // Globally disabled: Set global icon to grayscale
+        // Globally disabled: Force global icon to grayscale
         setExtensionIcon({ path: ICON_INACTIVE_PATH });
         if (tabId) {
           setExtensionIcon({ path: ICON_INACTIVE_PATH, tabId });
         }
       } else if (data.mode === "global") {
-        // Globally enabled: Set global icon to active (colored)
+        // Globally active: Force global icon to colored active state
         setExtensionIcon({ path: ICON_ACTIVE_PATH });
         if (tabId) {
           setExtensionIcon({ path: ICON_ACTIVE_PATH, tabId });
         }
       } else {
-        // Tab mode: Set default global icon to grayscale
+        // Tab-specific mode: Default global icon to grayscale
         setExtensionIcon({ path: ICON_INACTIVE_PATH });
 
-        // Set specific tab icon based on its active state
+        // Set specific active/grayscale status for current tab
         if (tabId) {
           const isTabActive = !!data.activeTabIds[tabId];
           setExtensionIcon({
@@ -95,7 +109,11 @@
     });
   };
 
-  // Initialize default status on installation
+  // ==========================================
+  // RUNTIME LIFECYCLE LISTENERS
+  // ==========================================
+
+  // Set default configurations upon installation
   chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.local.get({
       enabled: true,
@@ -111,7 +129,7 @@
     });
   });
 
-  // Clean up tab active status when a tab is closed
+  // Purge tab active configurations when a tab is destroyed
   chrome.tabs.onRemoved.addListener((tabId) => {
     chrome.storage.local.get({ activeTabIds: {} }, (data) => {
       if (chrome.runtime.lastError) return;
@@ -123,32 +141,55 @@
     });
   });
 
-  // Update icon when tab is switched
+  // Re-sync icon status when active tab changes
   chrome.tabs.onActivated.addListener((activeInfo) => {
-    updateBadgeForTab(activeInfo.tabId);
+    updateActionStateForTab(activeInfo.tabId);
   });
 
-  // Update icon when a tab finished loading
+  // Re-sync icon status when tab updates loading state
   chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo.status === "complete") {
-      updateBadgeForTab(tabId);
+      updateActionStateForTab(tabId);
     }
   });
 
-  // Sync icon instantly when local storage changes
+  // Re-sync status when local storage configurations update
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === "local") {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (chrome.runtime.lastError) return;
         if (tabs[0]) {
-          updateBadgeForTab(tabs[0].id);
+          updateActionStateForTab(tabs[0].id);
         }
       });
     }
   });
 
-  // Handle keaktifan checks from content scripts
+  // ==========================================
+  // CROSS-SCRIPT MESSAGE DISPATCHERS
+  // ==========================================
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Return sender tab details
+    if (request.action === "getTabInfo") {
+      sendResponse({ tabId: sender.tab?.id });
+      return false;
+    }
+
+    // Retrieve active zoom level for a tab
+    if (request.action === "getZoom") {
+      const tabId = sender.tab?.id;
+      if (!tabId) {
+        sendResponse({ zoom: 1 });
+        return false;
+      }
+      chrome.tabs.getZoom(tabId, (zoom) => {
+        sendResponse({ zoom: zoom || 1 });
+      });
+      return true; // Indicates asynchronous response
+    }
+
+    // Check if copy services are active for a tab
     if (request.action === "checkActive") {
       const tabId = sender.tab?.id;
       if (!tabId) {
@@ -174,15 +215,31 @@
           sendResponse({ isActive: !!data.activeTabIds[tabId] });
         }
       });
-      return true; // Keep the response channel open for async response
+      return true; // Indicates asynchronous response
     }
   });
 
-  // Initial update for the currently active tab on startup
+  // Sync zoom factor changes dynamically across pages
+  chrome.tabs.onZoomChange.addListener((zoomChangeInfo) => {
+    chrome.tabs.sendMessage(zoomChangeInfo.tabId, {
+      action: "zoomUpdated",
+      zoom: zoomChangeInfo.newZoomFactor
+    }, () => {
+      // Catch error dynamically if tab doesn't have active content script
+      const err = chrome.runtime.lastError;
+    });
+  });
+
+  // Connection port handler for content script orphan monitoring
+  chrome.runtime.onConnect.addListener((port) => {
+    // Kept open to track connection liveness
+  });
+
+  // Synchronize state for the currently active tab on worker startup
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (chrome.runtime.lastError) return;
     if (tabs[0]) {
-      updateBadgeForTab(tabs[0].id);
+      updateActionStateForTab(tabs[0].id);
     }
   });
 })();
