@@ -69,6 +69,8 @@
         Object.assign(element.style, val);
       } else if (key === "className") {
         element.className = val;
+      } else if (key === "textContent" || key === "innerText") {
+        element[key] = val;
       } else if (key.startsWith("on") && typeof val === "function") {
         element.addEventListener(key.substring(2).toLowerCase(), val);
       } else if (val !== undefined && val !== null) {
@@ -502,7 +504,7 @@
           return el("div", {
             className: `tooltip-list-item${item.type === "link" ? " type-link" : ""}`
           }, [
-            el("span", { textContent: `${prefix}${displayWords}${hasMore ? "..." : ""}`, title: cleanText }),
+            el("span", { title: cleanText }, [`${prefix}${displayWords}${hasMore ? "..." : ""}`]),
             el("button", {
               className: "tooltip-delete-btn",
               onclick: (event) => {
