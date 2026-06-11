@@ -134,7 +134,7 @@
       clipboardBuffer = { plain: "", html: "" };
     } else {
       const linksOnly = newList.filter(item => item.type === "link");
-      const textsOnly = newList.filter(item => item.type === "text");
+      const textsOnly = newList.filter(item => item.type === "text" || item.type === "markdown");
       const sortedList = [...linksOnly, ...textsOnly];
 
       clipboardBuffer.plain = sortedList.map(item => item.plain).join("\n");
@@ -239,7 +239,7 @@
         }
 
         const itemText = document.createElement("span");
-        const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
+        const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").replace(/^\[Source\]\(.*?\)\n+/, "").trim();
         const words = cleanText.split(/\s+/).filter(Boolean);
         const displayWords = words.slice(0, 2).join(" ") || "";
         const hasMore = words.length > 2;
