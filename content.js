@@ -683,35 +683,22 @@
     const handleFloatingButtonClick = () => {
       if (!chrome.runtime?.id) return;
 
-      const fallbackToReadText = () => {
-        if (!navigator.clipboard?.readText) {
-          console.warn("[Floating Button] Clipboard API readText not supported.");
+      chrome.runtime.sendMessage({ action: "readClipboard" }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error("[Floating Button] Clipboard request failed:", chrome.runtime.lastError);
           return;
         }
-        navigator.clipboard.readText().then(plainText => {
-          if (plainText) {
-            insertTextAtCursor(plainText);
-            showSuccessState();
-          }
-        }).catch(err => {
-          console.error("[Floating Button] Clipboard readText fallback failed:", err);
-        });
-      };
 
-      if (!navigator.clipboard?.read) {
-        fallbackToReadText();
-        return;
-      }
-      
-      navigator.clipboard.read().then(clipboardItems => {
-        let htmlFound = false;
-        
-        for (const item of clipboardItems) {
-          if (item.types.includes("text/html")) {
-            htmlFound = true;
-            item.getType("text/html").then(blob => {
-              blob.text().then(htmlText => {
-                const markdownText = convertToMarkdown("", htmlText, "");
+        if (response && response.success) {
+          const { htmlText, plainText } = response;
+
+          // If htmlText contains formatted HTML, convert it to markdown
+          if (htmlText && htmlText.trim().length > 0) {
+            const markdownText = convertToMarkdown("", htmlText, "");
+            
+            // Re-write the converted markdown back to clipboard as both plain and formatted text
+            if (navigator.clipboard && window.isSecureContext) {
+              try {
                 const blobPlain = new Blob([markdownText], { type: "text/plain" });
                 const escapedMd = markdownText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 const htmlContent = `<div style="white-space: pre-wrap; font-family: monospace;">${escapMd}</div>`;
@@ -727,29 +714,26 @@
                 navigator.clipboard.write(clipboardData).then(() => {
                   insertTextAtCursor(markdownText);
                   showSuccessState();
-                });
-              });
-            });
-            break;
-          }
-        }
-        
-        if (!htmlFound) {
-          for (const item of clipboardItems) {
-            if (item.types.includes("text/plain")) {
-              item.getType("text/plain").then(blob => {
-                blob.text().then(plainText => {
-                  insertTextAtCursor(plainText);
+                }).catch(() => {
+                  // Fallback write if browser denies write permission in this page context
+                  insertTextAtCursor(markdownText);
                   showSuccessState();
                 });
-              });
-              break;
+              } catch (err) {
+                insertTextAtCursor(markdownText);
+                showSuccessState();
+              }
+            } else {
+              insertTextAtCursor(markdownText);
+              showSuccessState();
             }
+          } else if (plainText) {
+            insertTextAtCursor(plainText);
+            showSuccessState();
           }
+        } else {
+          console.error("[Floating Button] Offscreen clipboard read failed:", response?.error);
         }
-      }).catch(err => {
-        console.debug("[Floating Button] navigator.clipboard.read failed, trying readText fallback:", err);
-        fallbackToReadText();
       });
     };
 

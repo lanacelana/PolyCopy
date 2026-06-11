@@ -166,10 +166,75 @@
   });
 
   // ==========================================
+  // OFFSCREEN CLIPBOARD READER
+  // ==========================================
+
+  let creatingOffscreenPromise = null;
+
+  /**
+   * Safe check and creation of offscreen document context.
+   * @param {string} path - Path to offscreen HTML.
+   */
+  const setupOffscreenDocument = async (path) => {
+    const offscreenUrl = chrome.runtime.getURL(path);
+    const existingContexts = await chrome.runtime.getContexts({
+      contextTypes: ['OFFSCREEN_DOCUMENT'],
+      documentUrls: [offscreenUrl]
+    });
+
+    if (existingContexts.length > 0) {
+      return;
+    }
+
+    if (creatingOffscreenPromise) {
+      await creatingOffscreenPromise;
+    } else {
+      creatingOffscreenPromise = chrome.offscreen.createDocument({
+        url: path,
+        reasons: [chrome.offscreen.Reason.CLIPBOARD || 'CLIPBOARD'],
+        justification: 'Read clipboard contents to paste as markdown'
+      });
+      await creatingOffscreenPromise;
+      creatingOffscreenPromise = null;
+    }
+  };
+
+  /**
+   * Spins up the offscreen document, requests clipboard data, and terminates it.
+   * @returns {Promise<Object>}
+   */
+  const readClipboardFromOffscreen = async () => {
+    const path = 'offscreen.html';
+    await setupOffscreenDocument(path);
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        target: 'offscreen',
+        action: 'read-clipboard'
+      });
+      return response || { success: false, error: "No response from offscreen document" };
+    } catch (err) {
+      return { success: false, error: err.message };
+    } finally {
+      // Close the document to keep resources light
+      await chrome.offscreen.closeDocument().catch(() => {});
+    }
+  };
+
+  // ==========================================
   // CROSS-SCRIPT MESSAGE DISPATCHERS
   // ==========================================
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Read clipboard contents using the offscreen document
+    if (request.action === "readClipboard") {
+      readClipboardFromOffscreen().then(result => {
+        sendResponse(result);
+      }).catch(err => {
+        sendResponse({ success: false, error: err.message });
+      });
+      return true; // Indicates asynchronous response
+    }
     // Return sender tab details
     if (request.action === "getTabInfo") {
       sendResponse({ tabId: sender.tab?.id });
