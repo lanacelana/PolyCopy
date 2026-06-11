@@ -1029,6 +1029,8 @@
   try {
     const port = chrome.runtime.connect({ name: "smart-multi-copy-sync" });
     port.onDisconnect.addListener(() => {
+      // Accessing lastError suppresses the "Unchecked runtime.lastError: The page keeping the extension port is moved into back/forward cache" warning in the extension console
+      const err = chrome.runtime.lastError;
       console.log("[MultiCopy Content] Port disconnected - script orphaned. Cleaning up UI...");
       
       if (floatBtn) {
