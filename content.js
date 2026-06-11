@@ -40,6 +40,87 @@
   };
 
   /**
+   * Converts plain text + HTML selection to Markdown format.
+   * @param {string} plainText
+   * @param {string} htmlText
+   * @param {string} url
+   * @returns {string} The Markdown representation of the selection.
+   */
+  const convertToMarkdown = (plainText, htmlText, url) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText || "", "text/html");
+
+    const parseNode = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node.textContent;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        return "";
+      }
+
+      const tagName = node.tagName.toUpperCase();
+
+      let childrenMarkdown = "";
+      for (const child of node.childNodes) {
+        childrenMarkdown += parseNode(child);
+      }
+
+      switch (tagName) {
+        case 'A':
+          const href = node.getAttribute('href') || '';
+          return `[${childrenMarkdown}](${href})`;
+        case 'STRONG':
+        case 'B':
+          return `**${childrenMarkdown}**`;
+        case 'EM':
+        case 'I':
+          return `*${childrenMarkdown}*`;
+        case 'CODE':
+          if (node.parentNode && node.parentNode.tagName === 'PRE') {
+            return childrenMarkdown;
+          }
+          return `\`${childrenMarkdown}\``;
+        case 'PRE':
+          return `\n\`\`\`\n${childrenMarkdown.trim()}\n\`\`\`\n`;
+        case 'H1':
+          return `\n# ${childrenMarkdown}\n`;
+        case 'H2':
+          return `\n## ${childrenMarkdown}\n`;
+        case 'H3':
+          return `\n### ${childrenMarkdown}\n`;
+        case 'H4':
+          return `\n#### ${childrenMarkdown}\n`;
+        case 'H5':
+          return `\n##### ${childrenMarkdown}\n`;
+        case 'H6':
+          return `\n###### ${childrenMarkdown}\n`;
+        case 'BR':
+          return '\n';
+        case 'P':
+        case 'DIV':
+          if (!childrenMarkdown.trim()) return "";
+          return `\n${childrenMarkdown}\n`;
+        case 'LI':
+          return `\n- ${childrenMarkdown}`;
+        case 'UL':
+        case 'OL':
+          return `\n${childrenMarkdown}\n`;
+        default:
+          return childrenMarkdown;
+      }
+    };
+
+    let contentMarkdown = parseNode(doc.body).trim();
+    // clean up duplicate newlines
+    contentMarkdown = contentMarkdown.replace(/\n{3,}/g, '\n\n');
+
+    if (url) {
+      return `[Source](${url})\n\n${contentMarkdown}`;
+    }
+    return contentMarkdown;
+  };
+
+  /**
    * Safely updates the system clipboard and local storage.
    * @param {Array} newList - The updated list of copied items.
    * @param {boolean} [isRefreshAction=false] - Whether to redraw the tooltip after update.
@@ -122,7 +203,7 @@
         btn.style.opacity = "0.3";
       }
     });
-    button.className = button.className.replace("btn-blue", "btn-success").replace("btn-orange", "btn-success");
+    button.className = button.className.replace("btn-blue", "btn-success").replace("btn-orange", "btn-success").replace("btn-markdown", "btn-success");
     button.innerHTML = message;
     setTimeout(callback, 400);
   };
@@ -162,7 +243,7 @@
         const words = cleanText.split(/\s+/).filter(Boolean);
         const displayWords = words.slice(0, 2).join(" ") || "";
         const hasMore = words.length > 2;
-        const prefix = item.type === "link" ? "🔗 " : "📝 ";
+        const prefix = item.type === "link" ? "🔗 " : (item.type === "markdown" ? "Ⓜ️ " : "📝 ");
 
         itemText.innerText = `${prefix}${displayWords}${hasMore ? "..." : ""}`;
         itemText.title = cleanText;
@@ -226,6 +307,25 @@
       });
     };
 
+    // Button 2.5: Save as Markdown
+    const btnAddMarkdown = document.createElement("button");
+    btnAddMarkdown.className = "btn-markdown btn-circle";
+    btnAddMarkdown.innerHTML = "M↓";
+    btnAddMarkdown.title = "Markdown It";
+    btnAddMarkdown.onclick = () => {
+      if (!chrome.runtime?.id) return;
+      const markdownText = convertToMarkdown(plainText, htmlText, currentUrl);
+      const newItem = {
+        type: "markdown",
+        plain: `${markdownText}\n`,
+        html: `<div>${htmlText}<br></div>`
+      };
+      const newList = [...textList, newItem];
+      setSuccessEffect(btnAddMarkdown, "✓", () => {
+        triggerClipboardUpdate(newList);
+      });
+    };
+
     // Button 3: Clear queue
     const btnClearAll = document.createElement("button");
     btnClearAll.className = "btn-clear btn-circle";
@@ -240,6 +340,7 @@
 
     buttonRow.appendChild(btnAddLink);
     buttonRow.appendChild(btnAddText);
+    buttonRow.appendChild(btnAddMarkdown);
     buttonRow.appendChild(btnClearAll);
     currentTooltip.appendChild(buttonRow);
     document.body.appendChild(currentTooltip);

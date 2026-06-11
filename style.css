@@ -95,6 +95,13 @@
   font-size: 13px;
 }
 
+.smart-copy-tooltip .btn-markdown {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-item) !important;
+  color: var(--accent-gold);
+  font-size: 11px;
+}
+
 .smart-copy-tooltip .btn-success {
   background-color: var(--btn-success-bg) !important;
   color: white !important;
