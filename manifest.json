@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Smart Multi-Copy Highlight, Mate",
+  "name": "Smart Multi-Copy Highlight",
   "version": "1.4",
-  "description": "Highlight heaps of text to grab 'em all at once with premium styles and colors. Fair dinkum!",
+  "description": "Highlight multiple blocks of text to copy them all at once with clean style.",
   "author": "lncln",
   "permissions": [
     "storage",

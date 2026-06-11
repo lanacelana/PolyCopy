@@ -77,9 +77,9 @@
       if (tabUrlDesc) {
         try {
           const urlObj = new URL(currentTab.url);
-          tabUrlDesc.textContent = urlObj.hostname || currentTab.title || "This tab, mate";
+          tabUrlDesc.textContent = urlObj.hostname || currentTab.title || "This tab";
         } catch (e) {
-          tabUrlDesc.textContent = currentTab.title || "This tab, mate";
+          tabUrlDesc.textContent = currentTab.title || "This tab";
         }
       }
 
@@ -165,13 +165,13 @@
       if (!enabled) {
         modeOff?.classList.add("active");
         if (globalStatus) {
-          globalStatus.textContent = "No Go";
+          globalStatus.textContent = "Disabled";
           globalStatus.classList.add("off");
         }
         tabStatusCard?.classList.add("hidden");
       } else {
         if (globalStatus) {
-          globalStatus.textContent = "Sweet As";
+          globalStatus.textContent = "Enabled";
           globalStatus.classList.remove("off");
         }
         
@@ -241,7 +241,7 @@
           listContainer.appendChild(
             el("div", {
               style: { color: "var(--text-muted)", textAlign: "center", padding: "10px" }
-            }, ["Nothing here yet, mate. Grab some text!"])
+            }, ["No items copied yet. Highlight some text to copy!"])
           );
           return;
         }
@@ -310,9 +310,9 @@
           if (data.textList.length === 0) return;
 
           writeListToClipboard(data.textList, () => {
-            copyAllBtn.textContent = "Grabbed the lot, mate!";
+            copyAllBtn.textContent = "Copied all items!";
             setTimeout(() => {
-              copyAllBtn.textContent = "Grab the Lot";
+              copyAllBtn.textContent = "Copy All";
             }, 1500);
           });
         });

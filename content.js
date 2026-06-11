@@ -533,11 +533,11 @@
         if (!chrome.runtime?.id) return;
         const newItem = {
           type: "link",
-          plain: `Source, mate: ${currentUrl}\n${plainText}\n`,
-          html: `<div><span style="font-size:13px; color:#f2ffe5;">Source, mate: <a href="${currentUrl}" target="_blank" style="color:#dfff00;">${currentUrl}</a></span><br>${htmlText}<br></div>`
+          plain: `Source: ${currentUrl}\n${plainText}\n`,
+          html: `<div><span style="font-size:13px; color:#f2ffe5;">Source: <a href="${currentUrl}" target="_blank" style="color:#dfff00;">${currentUrl}</a></span><br>${htmlText}<br></div>`
         };
         const newList = [newItem, ...textList];
-        setSuccessEffect(btnAddLink, "✓ Sweet!", () => {
+        setSuccessEffect(btnAddLink, "✓ Copied!", () => {
           triggerClipboardUpdate(newList);
         });
       }
@@ -553,7 +553,7 @@
           html: `<div>${htmlText}<br></div>`
         };
         const newList = [...textList, newItem];
-        setSuccessEffect(btnAddText, "✓ Sweet!", () => {
+        setSuccessEffect(btnAddText, "✓ Copied!", () => {
           triggerClipboardUpdate(newList);
         });
       }
