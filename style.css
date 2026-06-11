@@ -95,12 +95,7 @@
   font-size: 13px;
 }
 
-.smart-copy-tooltip .btn-markdown {
-  background-color: var(--bg-main);
-  border: 1px solid var(--border-item) !important;
-  color: var(--accent-gold);
-  font-size: 11px;
-}
+
 
 .smart-copy-tooltip .btn-success {
   background-color: var(--btn-success-bg) !important;
@@ -173,6 +168,55 @@
   color: #ef4444 !important;
   background: transparent !important;
   transform: scale(1.2) !important;
+}
+
+/* Standalone Floating Markdown Button */
+#smart-markdown-floating-btn {
+  --bg-gold: #dfff00;
+  --border-dark: #0b2114;
+  --text-dark: #0b2114;
+  
+  position: fixed;
+  z-index: 2147483647; /* Highest z-index to stay on top of everything */
+  right: 20px;
+  bottom: 85px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--bg-gold) !important;
+  border: 2px solid var(--border-dark) !important;
+  color: var(--text-dark) !important;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  cursor: move !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 1px rgba(223, 255, 0, 0.2);
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#smart-markdown-floating-btn:hover {
+  background-color: #ffffff !important;
+  border-color: var(--bg-gold) !important;
+  transform: scale(1.08);
+}
+
+#smart-markdown-floating-btn:active {
+  transform: scale(0.95);
+}
+
+#smart-markdown-floating-btn.success {
+  background-color: #2d6a4f !important;
+  border-color: #2d6a4f !important;
+  color: white !important;
+}
+
+#smart-markdown-floating-btn.dragging {
+  transition: none !important;
 }
 
 /* Custom Scrollbar */

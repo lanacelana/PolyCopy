@@ -11,6 +11,7 @@
 
   let currentTooltip = null;
   let clipboardBuffer = { plain: "", html: "" };
+  let lastActiveInput = null;
 
   /**
    * Safely removes the active tooltip element from the DOM if it exists.
@@ -47,6 +48,9 @@
    * @returns {string} The Markdown representation of the selection.
    */
   const convertToMarkdown = (plainText, htmlText, url) => {
+    if (htmlText && htmlText.includes("font-family: monospace;")) {
+      return plainText.trim();
+    }
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlText || "", "text/html");
 
@@ -83,17 +87,17 @@
         case 'PRE':
           return `\n\`\`\`\n${childrenMarkdown.trim()}\n\`\`\`\n`;
         case 'H1':
-          return `\n# ${childrenMarkdown}\n`;
+          return `\n# ${childrenMarkdown.trim()}\n`;
         case 'H2':
-          return `\n## ${childrenMarkdown}\n`;
+          return `\n## ${childrenMarkdown.trim()}\n`;
         case 'H3':
-          return `\n### ${childrenMarkdown}\n`;
+          return `\n### ${childrenMarkdown.trim()}\n`;
         case 'H4':
-          return `\n#### ${childrenMarkdown}\n`;
+          return `\n#### ${childrenMarkdown.trim()}\n`;
         case 'H5':
-          return `\n##### ${childrenMarkdown}\n`;
+          return `\n##### ${childrenMarkdown.trim()}\n`;
         case 'H6':
-          return `\n###### ${childrenMarkdown}\n`;
+          return `\n###### ${childrenMarkdown.trim()}\n`;
         case 'BR':
           return '\n';
         case 'P':
@@ -101,10 +105,10 @@
           if (!childrenMarkdown.trim()) return "";
           return `\n${childrenMarkdown}\n`;
         case 'LI':
-          return `\n- ${childrenMarkdown}`;
+          return `\n- ${childrenMarkdown.trim()}`;
         case 'UL':
         case 'OL':
-          return `\n${childrenMarkdown}\n`;
+          return `\n${childrenMarkdown.trim()}\n`;
         default:
           return childrenMarkdown;
       }
@@ -118,6 +122,47 @@
       return `[Source](${url})\n\n${contentMarkdown}`;
     }
     return contentMarkdown;
+  };
+
+  /**
+   * Inserts text at the cursor position in the last active input or contenteditable element.
+   * @param {string} text - The text to insert.
+   * @returns {boolean} True if successfully inserted.
+   */
+  const insertTextAtCursor = (text) => {
+    const activeEl = lastActiveInput || document.activeElement;
+    if (!activeEl) return false;
+
+    try {
+      activeEl.focus();
+    } catch (e) {
+      console.debug("[Tooltip] Failed to focus active element:", e);
+    }
+
+    const tagName = activeEl.tagName.toUpperCase();
+    if (tagName === "INPUT" || tagName === "TEXTAREA") {
+      try {
+        const start = activeEl.selectionStart;
+        const end = activeEl.selectionEnd;
+        const val = activeEl.value;
+        activeEl.value = val.substring(0, start) + text + val.substring(end);
+        activeEl.selectionStart = activeEl.selectionEnd = start + text.length;
+        activeEl.dispatchEvent(new Event("input", { bubbles: true }));
+        activeEl.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      } catch (e) {
+        console.error("[Tooltip] Direct value insert failed:", e);
+      }
+    } else {
+      // Contenteditable or other elements - use execCommand to insert at cursor
+      try {
+        document.execCommand("insertText", false, text);
+        return true;
+      } catch (e) {
+        console.error("[Tooltip] execCommand insertText failed:", e);
+      }
+    }
+    return false;
   };
 
   /**
@@ -307,25 +352,6 @@
       });
     };
 
-    // Button 2.5: Save as Markdown
-    const btnAddMarkdown = document.createElement("button");
-    btnAddMarkdown.className = "btn-markdown btn-circle";
-    btnAddMarkdown.innerHTML = "M↓";
-    btnAddMarkdown.title = "Markdown It";
-    btnAddMarkdown.onclick = () => {
-      if (!chrome.runtime?.id) return;
-      const markdownText = convertToMarkdown(plainText, htmlText, currentUrl);
-      const newItem = {
-        type: "markdown",
-        plain: `${markdownText}\n`,
-        html: `<div>${htmlText}<br></div>`
-      };
-      const newList = [...textList, newItem];
-      setSuccessEffect(btnAddMarkdown, "✓", () => {
-        triggerClipboardUpdate(newList);
-      });
-    };
-
     // Button 3: Clear queue
     const btnClearAll = document.createElement("button");
     btnClearAll.className = "btn-clear btn-circle";
@@ -340,7 +366,6 @@
 
     buttonRow.appendChild(btnAddLink);
     buttonRow.appendChild(btnAddText);
-    buttonRow.appendChild(btnAddMarkdown);
     buttonRow.appendChild(btnClearAll);
     currentTooltip.appendChild(buttonRow);
     document.body.appendChild(currentTooltip);
@@ -535,7 +560,7 @@
     }
   }, true);
 
-  // Listen for storage changes to dismiss tooltip instantly if extension is turned off
+  // Listen for storage changes to dismiss tooltip instantly and update button visibility if extension is turned off
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === "local" && chrome.runtime?.id) {
       chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
@@ -544,6 +569,194 @@
           removeTooltip();
         }
       });
+      updateFloatingButtonVisibility();
     }
   });
+  // Track the last focused input, textarea, or contenteditable element
+  document.addEventListener("focusin", (e) => {
+    const el = e.target;
+    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) {
+      lastActiveInput = el;
+    }
+  }, true);
+
+  const createFloatingMarkdownButton = () => {
+    if (document.getElementById("smart-markdown-floating-btn")) return;
+
+    const btn = document.createElement("button");
+    btn.id = "smart-markdown-floating-btn";
+    btn.innerHTML = "M";
+    btn.title = "Paste Clipboard as Markdown";
+
+    let isDragging = false;
+    let dragThreshold = 5;
+    let startX = 0, startY = 0;
+    let initialX = 0, initialY = 0;
+    let didDrag = false;
+
+    // Load saved position
+    chrome.storage.local.get({ floatBtnPosition: null }, (data) => {
+      if (data.floatBtnPosition) {
+        btn.style.right = "auto";
+        btn.style.bottom = "auto";
+        btn.style.left = `${data.floatBtnPosition.x}px`;
+        btn.style.top = `${data.floatBtnPosition.y}px`;
+      }
+    });
+
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      didDrag = false;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const rect = btn.getBoundingClientRect();
+      initialX = rect.left;
+      initialY = rect.top;
+
+      btn.classList.add("dragging");
+
+      document.addEventListener("mousemove", onMouseMove, { capture: true });
+      document.addEventListener("mouseup", onMouseUp, { capture: true });
+      
+      e.preventDefault();
+    };
+
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      if (Math.abs(deltaX) > dragThreshold || Math.abs(deltaY) > dragThreshold) {
+        didDrag = true;
+      }
+
+      let newX = initialX + deltaX;
+      let newY = initialY + deltaY;
+
+      const pad = 10;
+      const viewportW = window.innerWidth;
+      const viewportH = window.innerHeight;
+      const btnW = 36;
+      const btnH = 36;
+
+      if (newX < pad) newX = pad;
+      if (newX + btnW > viewportW - pad) newX = viewportW - btnW - pad;
+      if (newY < pad) newY = pad;
+      if (newY + btnH > viewportH - pad) newY = viewportH - btnH - pad;
+
+      btn.style.right = "auto";
+      btn.style.bottom = "auto";
+      btn.style.left = `${newX}px`;
+      btn.style.top = `${newY}px`;
+    };
+
+    const onMouseUp = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      btn.classList.remove("dragging");
+      document.removeEventListener("mousemove", onMouseMove, { capture: true });
+      document.removeEventListener("mouseup", onMouseUp, { capture: true });
+
+      if (didDrag) {
+        const rect = btn.getBoundingClientRect();
+        chrome.storage.local.set({
+          floatBtnPosition: { x: rect.left, y: rect.top }
+        });
+      } else {
+        handleFloatingButtonClick();
+      }
+    };
+
+    const handleFloatingButtonClick = () => {
+      if (!chrome.runtime?.id) return;
+      navigator.clipboard.read().then(clipboardItems => {
+        let htmlFound = false;
+        for (const item of clipboardItems) {
+          if (item.types.includes("text/html")) {
+            htmlFound = true;
+            item.getType("text/html").then(blob => {
+              blob.text().then(htmlText => {
+                const markdownText = convertToMarkdown("", htmlText, "");
+                const blobPlain = new Blob([markdownText], { type: "text/plain" });
+                const htmlContent = `<div style="white-space: pre-wrap; font-family: monospace;">${markdownText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+                const blobHtml = new Blob([htmlContent], { type: "text/html" });
+                
+                const clipboardData = [
+                  new ClipboardItem({
+                    "text/plain": blobPlain,
+                    "text/html": blobHtml
+                  })
+                ];
+                
+                navigator.clipboard.write(clipboardData).then(() => {
+                  insertTextAtCursor(markdownText);
+                  showSuccessState();
+                });
+              });
+            });
+            break;
+          }
+        }
+        if (!htmlFound) {
+          for (const item of clipboardItems) {
+            if (item.types.includes("text/plain")) {
+              item.getType("text/plain").then(blob => {
+                blob.text().then(plainText => {
+                  insertTextAtCursor(plainText);
+                  showSuccessState();
+                });
+              });
+              break;
+            }
+          }
+        }
+      }).catch(err => {
+        console.error("[Floating Button] Clipboard read failed:", err);
+      });
+    };
+
+    const showSuccessState = () => {
+      btn.innerHTML = "✓";
+      btn.classList.add("success");
+      setTimeout(() => {
+        btn.innerHTML = "M";
+        btn.classList.remove("success");
+      }, 1000);
+    };
+
+    btn.addEventListener("mousedown", onMouseDown);
+    
+    // Inject styles and btn when body is present
+    const injectBtn = () => {
+      if (document.body) {
+        document.body.appendChild(btn);
+      } else {
+        setTimeout(injectBtn, 50);
+      }
+    };
+    injectBtn();
+  };
+
+  const updateFloatingButtonVisibility = () => {
+    if (!chrome.runtime?.id) return;
+    chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
+      if (chrome.runtime.lastError) return;
+      const btn = document.getElementById("smart-markdown-floating-btn");
+      if (response && response.isActive) {
+        if (!btn) {
+          createFloatingMarkdownButton();
+        } else {
+          btn.style.display = "flex";
+        }
+      } else {
+        if (btn) {
+          btn.style.display = "none";
+        }
+      }
+    });
+  };
+
+  updateFloatingButtonVisibility();
 })();

@@ -206,7 +206,7 @@
           const textSpan = document.createElement("span");
           textSpan.className = "text-content";
 
-          const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").replace(/^\[Source\]\(.*?\)\n+/, "").trim();
+          const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
           textSpan.textContent = `${index + 1}. ${cleanText}`;
           textSpan.title = cleanText;
 

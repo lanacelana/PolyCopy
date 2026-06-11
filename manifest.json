@@ -6,7 +6,8 @@
   "author": "lncln",
   "permissions": [
     "storage",
-    "clipboardWrite"
+    "clipboardWrite",
+    "clipboardRead"
   ],
   "background": {
     "service_worker": "background.js"
