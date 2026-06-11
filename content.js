@@ -682,6 +682,26 @@
      */
     const handleFloatingButtonClick = () => {
       if (!chrome.runtime?.id) return;
+
+      const fallbackToReadText = () => {
+        if (!navigator.clipboard?.readText) {
+          console.warn("[Floating Button] Clipboard API readText not supported.");
+          return;
+        }
+        navigator.clipboard.readText().then(plainText => {
+          if (plainText) {
+            insertTextAtCursor(plainText);
+            showSuccessState();
+          }
+        }).catch(err => {
+          console.error("[Floating Button] Clipboard readText fallback failed:", err);
+        });
+      };
+
+      if (!navigator.clipboard?.read) {
+        fallbackToReadText();
+        return;
+      }
       
       navigator.clipboard.read().then(clipboardItems => {
         let htmlFound = false;
@@ -728,7 +748,8 @@
           }
         }
       }).catch(err => {
-        console.error("[Floating Button] Clipboard read failed:", err);
+        console.debug("[Floating Button] navigator.clipboard.read failed, trying readText fallback:", err);
+        fallbackToReadText();
       });
     };
 
