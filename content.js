@@ -19,6 +19,7 @@
   
   let tooltipDragCleanup = null;
   let floatBtnDragCleanup = null;
+  let iframeObserver = null;
   
   let lastActiveInput = null;
   let myTabId = null;
@@ -641,7 +642,7 @@
     const btn = el("button", {
       id: "smart-markdown-floating-btn",
       title: "Paste Clipboard as Markdown"
-    }, ["Paste"]);
+    }, ["P"]);
 
     // Query and set proper Zoom scale
     if (isExtensionValid()) {
@@ -746,7 +747,7 @@
       btn.innerHTML = "✓";
       btn.classList.add("success");
       setTimeout(() => {
-        btn.innerHTML = "Paste";
+        btn.innerHTML = "P";
         btn.classList.remove("success");
       }, 1000);
     };
@@ -762,7 +763,7 @@
         if (didDrag) {
           const viewportW = window.innerWidth;
           const viewportH = window.innerHeight;
-          const btnW = rect.width || 54;
+          const btnW = rect.width || 30;
           const btnH = rect.height || 30;
 
           const centerX = rect.left + btnW / 2;
@@ -819,6 +820,17 @@
           isActive = true;
         } else if (data.mode === "tab" && myTabId) {
           isActive = !!data.activeTabIds[myTabId];
+        }
+      }
+
+      // Hide the top-level button if there is a large iframe on the page to prevent duplicate buttons
+      if (isActive && window === window.top) {
+        const hasLargeIframe = Array.from(document.querySelectorAll("iframe")).some(iframe => {
+          const rect = iframe.getBoundingClientRect();
+          return rect.width > 400 && rect.height > 300;
+        });
+        if (hasLargeIframe) {
+          isActive = false;
         }
       }
 
@@ -1046,6 +1058,11 @@
       
       removeTooltip();
 
+      if (iframeObserver) {
+        iframeObserver.disconnect();
+        iframeObserver = null;
+      }
+
       document.removeEventListener("mouseup", onDocumentMouseUp, true);
       document.removeEventListener("keydown", onDocumentKeyDown, true);
       document.removeEventListener("focusin", onDocumentFocusIn, true);
@@ -1053,5 +1070,30 @@
     });
   } catch (e) {
     console.debug("[MultiCopy Content] Sync port connection failed:", e);
+  }
+
+  // For top-level frame, monitor dynamic iframe injection to prevent duplicate buttons
+  if (isExtensionValid() && window === window.top) {
+    iframeObserver = new MutationObserver((mutations) => {
+      let shouldCheck = false;
+      for (const mutation of mutations) {
+        if (mutation.addedNodes.length > 0) {
+          for (const node of mutation.addedNodes) {
+            if (node.tagName === "IFRAME" || (node.querySelectorAll && node.querySelectorAll("iframe").length > 0)) {
+              shouldCheck = true;
+              break;
+            }
+          }
+        }
+        if (shouldCheck) break;
+      }
+      if (shouldCheck) {
+        updateFloatingButtonVisibility();
+      }
+    });
+    iframeObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
   }
 })();
