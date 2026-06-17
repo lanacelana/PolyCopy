@@ -641,7 +641,7 @@
     const btn = el("button", {
       id: "smart-markdown-floating-btn",
       title: "Paste Clipboard as Markdown"
-    }, ["M"]);
+    }, ["Paste"]);
 
     // Query and set proper Zoom scale
     if (isExtensionValid()) {
@@ -746,7 +746,7 @@
       btn.innerHTML = "✓";
       btn.classList.add("success");
       setTimeout(() => {
-        btn.innerHTML = "M";
+        btn.innerHTML = "Paste";
         btn.classList.remove("success");
       }, 1000);
     };
@@ -762,7 +762,7 @@
         if (didDrag) {
           const viewportW = window.innerWidth;
           const viewportH = window.innerHeight;
-          const btnW = rect.width || 30;
+          const btnW = rect.width || 54;
           const btnH = rect.height || 30;
 
           const centerX = rect.left + btnW / 2;
