@@ -226,6 +226,39 @@
   // ==========================================
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Forward selection messages from iframes to the top-level frame
+    if (request.action === "iframeSelection") {
+      const tabId = sender.tab?.id;
+      if (tabId) {
+        chrome.tabs.sendMessage(tabId, {
+          action: "showIframeSelection",
+          text: request.text,
+          html: request.html,
+          clientX: request.clientX,
+          clientY: request.clientY,
+          iframeUrl: request.iframeUrl,
+          isKeyboard: request.isKeyboard
+        }, { frameId: 0 }, () => {
+          const err = chrome.runtime.lastError;
+        });
+      }
+      sendResponse({ success: true });
+      return false;
+    }
+
+    if (request.action === "iframeClearSelection") {
+      const tabId = sender.tab?.id;
+      if (tabId) {
+        chrome.tabs.sendMessage(tabId, {
+          action: "clearIframeSelection"
+        }, { frameId: 0 }, () => {
+          const err = chrome.runtime.lastError;
+        });
+      }
+      sendResponse({ success: true });
+      return false;
+    }
+
     // Read clipboard contents using the offscreen document
     if (request.action === "readClipboard") {
       readClipboardFromOffscreen().then(result => {

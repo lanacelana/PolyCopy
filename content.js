@@ -322,6 +322,75 @@
   };
 
   /**
+   * Helper to locate the source iframe element inside the main document.
+   * Checks for a single iframe, focused element, and matches iframe source URL.
+   * @param {string} iframeUrl - The source URL of the iframe to find.
+   * @returns {HTMLIFrameElement|null}
+   */
+  const findIframe = (iframeUrl) => {
+    const iframes = Array.from(document.querySelectorAll("iframe"));
+    if (iframes.length === 0) return null;
+    if (iframes.length === 1) return iframes[0];
+
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.tagName === "IFRAME") {
+      return activeEl;
+    }
+
+    if (iframeUrl) {
+      const cleanUrl = iframeUrl.split(/[?#]/)[0];
+      for (const iframe of iframes) {
+        try {
+          if (iframe.src) {
+            const iframeSrc = iframe.src.split(/[?#]/)[0];
+            if (iframeSrc === cleanUrl || iframeSrc.endsWith(cleanUrl) || cleanUrl.endsWith(iframeSrc)) {
+              return iframe;
+            }
+          }
+        } catch (e) {}
+      }
+    }
+    return null;
+  };
+
+  /**
+   * Renders selection tooltip on the top-level main document viewport,
+   * calculating the coordinate offset of the source iframe.
+   * @param {Object} data - Selection and coordinate data sent from iframe.
+   */
+  const handleShowIframeSelection = (data) => {
+    const { text, html, clientX, clientY, iframeUrl, isKeyboard } = data;
+    
+    let x = clientX;
+    let y = clientY;
+    
+    if (isKeyboard) {
+      const tooltipWidth = 240;
+      x = (window.innerWidth / 2) - (tooltipWidth / 2);
+      y = 80;
+    } else {
+      const iframeEl = findIframe(iframeUrl);
+      if (iframeEl) {
+        const rect = iframeEl.getBoundingClientRect();
+        x = rect.left + clientX;
+        y = rect.top + clientY;
+      } else {
+        // Fallback to center screen if iframe is missing/hidden
+        const tooltipWidth = 240;
+        x = (window.innerWidth / 2) - (tooltipWidth / 2);
+        y = 120;
+      }
+    }
+    
+    removeTooltip();
+    
+    chrome.storage.local.get({ textList: [] }, (storageData) => {
+      if (chrome.runtime.lastError) return;
+      showTooltip(x, y, text, html, storageData.textList, !isKeyboard);
+    });
+  };
+
+  /**
    * Compiles HTML content to a clean Markdown format.
    * @param {string} plainText - Backup plain text value.
    * @param {string} htmlText - Main source HTML string.
@@ -994,6 +1063,23 @@
 
     if (selectedText.length === 0) {
       removeTooltip();
+      if (window !== window.top) {
+        chrome.runtime.sendMessage({ action: "iframeClearSelection" });
+      }
+      return;
+    }
+
+    if (window !== window.top) {
+      // Delegate displaying the selection tooltip to the parent window
+      chrome.runtime.sendMessage({
+        action: "iframeSelection",
+        text: selectedText,
+        html: selectedHtml,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        iframeUrl: window.location.href,
+        isKeyboard: false
+      });
       return;
     }
 
@@ -1021,6 +1107,18 @@
         const { text: selectedText, html: selectedHtml } = getComposedSelection();
 
         if (selectedText.length === 0) return;
+
+        if (window !== window.top) {
+          // Delegate displaying the selection tooltip to the parent window
+          chrome.runtime.sendMessage({
+            action: "iframeSelection",
+            text: selectedText,
+            html: selectedHtml,
+            iframeUrl: window.location.href,
+            isKeyboard: true
+          });
+          return;
+        }
 
         chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
           if (chrome.runtime.lastError || !response || !response.isActive) return;
@@ -1105,6 +1203,14 @@
       const btn = document.getElementById("smart-markdown-floating-btn");
       if (btn && message.zoom !== undefined) {
         btn.style.setProperty("--zoom-scale", 1 / message.zoom);
+      }
+    } else if (message.action === "showIframeSelection") {
+      if (window === window.top) {
+        handleShowIframeSelection(message);
+      }
+    } else if (message.action === "clearIframeSelection") {
+      if (window === window.top) {
+        removeTooltip();
       }
     }
   });
