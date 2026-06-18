@@ -20,6 +20,7 @@
   let tooltipDragCleanup = null;
   let floatBtnDragCleanup = null;
   let iframeObserver = null;
+  let syncPort = null;
   
   let lastActiveInput = null;
   let myTabId = null;
@@ -1039,58 +1040,92 @@
     }
   });
 
-  // Track runtime connection to detect background worker reloads (orphan state cleanup)
-  try {
-    const port = chrome.runtime.connect({ name: "smart-multi-copy-sync" });
-    port.onDisconnect.addListener(() => {
-      // Accessing lastError suppresses the "Unchecked runtime.lastError: The page keeping the extension port is moved into back/forward cache" warning in the extension console
-      const err = chrome.runtime.lastError;
-      console.log("[MultiCopy Content] Port disconnected - script orphaned. Cleaning up UI...");
-      
-      if (floatBtn) {
-        if (floatBtnDragCleanup) {
-          floatBtnDragCleanup();
-          floatBtnDragCleanup = null;
+  /**
+   * Completely detaches event listeners and deletes injected UI elements when extension is orphaned.
+   */
+  const cleanupOrphanedUI = () => {
+    if (floatBtn) {
+      if (floatBtnDragCleanup) {
+        floatBtnDragCleanup();
+        floatBtnDragCleanup = null;
+      }
+      floatBtn.remove();
+      floatBtn = null;
+    }
+    
+    if (iframeObserver) {
+      iframeObserver.disconnect();
+      iframeObserver = null;
+    }
+    
+    removeTooltip();
+
+    document.removeEventListener("mouseup", onDocumentMouseUp, true);
+    document.removeEventListener("keydown", onDocumentKeyDown, true);
+    document.removeEventListener("focusin", onDocumentFocusIn, true);
+    window.removeEventListener("resize", onWindowResize);
+  };
+
+  /**
+   * Connects sync port to background worker and handles auto-reconnections.
+   */
+  const connectSyncPort = () => {
+    if (!isExtensionValid()) return;
+    try {
+      syncPort = chrome.runtime.connect({ name: "smart-multi-copy-sync" });
+      syncPort.onDisconnect.addListener(() => {
+        const err = chrome.runtime.lastError;
+        
+        // If extension context has been invalidated, cleanup the orphaned scripts
+        const isInvalidated = !isExtensionValid() || (err && err.message.includes("context invalidated"));
+        
+        if (isInvalidated) {
+          console.log("[MultiCopy Content] Extension context invalidated. Cleaning up UI...");
+          cleanupOrphanedUI();
+        } else {
+          console.log("[MultiCopy Content] Port disconnected (Service Worker asleep). Reconnecting...");
+          setTimeout(connectSyncPort, 1000);
         }
-        floatBtn.remove();
-        floatBtn = null;
-      }
-      
-      removeTooltip();
+      });
+    } catch (e) {
+      console.debug("[MultiCopy Content] Sync port connection failed:", e);
+    }
+  };
 
-      if (iframeObserver) {
-        iframeObserver.disconnect();
-        iframeObserver = null;
-      }
+  // Initialize runtime port connection
+  connectSyncPort();
 
-      document.removeEventListener("mouseup", onDocumentMouseUp, true);
-      document.removeEventListener("keydown", onDocumentKeyDown, true);
-      document.removeEventListener("focusin", onDocumentFocusIn, true);
-      window.removeEventListener("resize", onWindowResize);
-    });
-  } catch (e) {
-    console.debug("[MultiCopy Content] Sync port connection failed:", e);
-  }
-
-  // For top-level frame, monitor dynamic iframe injection to prevent duplicate buttons
-  if (isExtensionValid() && window === window.top) {
+  // Monitor DOM mutations to re-inject the button if it's wiped by the host page,
+  // and to manage top-level button visibility when large workspace iframes are added/removed.
+  if (isExtensionValid()) {
     iframeObserver = new MutationObserver((mutations) => {
-      let shouldCheck = false;
-      for (const mutation of mutations) {
-        if (mutation.addedNodes.length > 0) {
-          for (const node of mutation.addedNodes) {
+      let shouldRecheck = false;
+      
+      // 1. If our button should be active but is deleted from the body, trigger re-injection
+      const btn = document.getElementById("smart-markdown-floating-btn");
+      if (!btn) {
+        shouldRecheck = true;
+      }
+
+      // 2. For the top-level frame, check if a large task iframe was added/removed to toggle top-level button visibility
+      if (window === window.top) {
+        for (const mutation of mutations) {
+          const nodes = [...mutation.addedNodes, ...mutation.removedNodes];
+          for (const node of nodes) {
             if (node.tagName === "IFRAME" || (node.querySelectorAll && node.querySelectorAll("iframe").length > 0)) {
-              shouldCheck = true;
+              shouldRecheck = true;
               break;
             }
           }
+          if (shouldRecheck) break;
         }
-        if (shouldCheck) break;
       }
-      if (shouldCheck) {
+
+      if (shouldRecheck) {
         updateFloatingButtonVisibility();
       }
     });
+
     iframeObserver.observe(document.documentElement, {
       childList: true,
       subtree: true
