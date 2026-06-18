@@ -994,6 +994,14 @@
         }
       }
 
+      // Hide the sub-frame button if the sub-frame does not contain any input fields
+      if (isActive && window !== window.top) {
+        const hasInputs = !!document.querySelector("input, textarea, [contenteditable]:not([contenteditable='false'])");
+        if (!hasInputs) {
+          isActive = false;
+        }
+      }
+
       if (isActive) {
         if (!btn) {
           createFloatingMarkdownButton();
@@ -1296,6 +1304,20 @@
           const nodes = [...mutation.addedNodes, ...mutation.removedNodes];
           for (const node of nodes) {
             if (node.tagName === "IFRAME" || (node.querySelectorAll && node.querySelectorAll("iframe").length > 0)) {
+              shouldRecheck = true;
+              break;
+            }
+          }
+          if (shouldRecheck) break;
+        }
+      }
+
+      // 3. For sub-frames, check if input elements were added or removed to toggle button visibility
+      if (window !== window.top && !shouldRecheck) {
+        for (const mutation of mutations) {
+          const nodes = [...mutation.addedNodes, ...mutation.removedNodes];
+          for (const node of nodes) {
+            if (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || (node.querySelectorAll && node.querySelectorAll("input, textarea, [contenteditable]:not([contenteditable='false'])").length > 0)) {
               shouldRecheck = true;
               break;
             }
