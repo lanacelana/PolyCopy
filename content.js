@@ -223,20 +223,102 @@
   // ==========================================
 
   /**
-   * Extracts selection text in HTML and purges script/style elements.
-   * @param {Range} range - The active selection range object.
-   * @returns {string} The cleaned HTML string snippet.
+   * Recursively finds all open ShadowRoots starting from a given element.
+   * @param {Element|ShadowRoot} [root=document.documentElement]
+   * @returns {ShadowRoot[]}
    */
-  const getCleanHtmlFromRange = (range) => {
-    const fragment = range.cloneContents();
-    
-    // Eliminate embedded styles and scripts to avoid polluting text extraction
-    const elementsToRemove = fragment.querySelectorAll("style, script");
-    elementsToRemove.forEach(el => el.remove());
+  const getAllShadowRoots = (root = document.documentElement) => {
+    const roots = [];
+    const walk = (node) => {
+      if (!node) return;
+      if (node.shadowRoot) {
+        roots.push(node.shadowRoot);
+        walk(node.shadowRoot);
+      }
+      let child = node.firstElementChild;
+      while (child) {
+        walk(child);
+        child = child.nextElementSibling;
+      }
+    };
+    walk(root);
+    return roots;
+  };
 
-    const container = document.createElement("div");
-    container.appendChild(fragment);
-    return container.innerHTML;
+  /**
+   * Resolves the actual active element inside Shadow DOM boundaries.
+   * @returns {Element}
+   */
+  const getDeepActiveElement = () => {
+    let activeEl = document.activeElement;
+    while (activeEl && activeEl.shadowRoot && activeEl.shadowRoot.activeElement) {
+      activeEl = activeEl.shadowRoot.activeElement;
+    }
+    return activeEl;
+  };
+
+  /**
+   * Retrieves selection text, range, and HTML from the document, traversing Shadow DOM if present.
+   * Also falls back to text/textarea inputs selection.
+   * @returns {{text: string, html: string, range: Range|null}}
+   */
+  const getComposedSelection = () => {
+    let text = "";
+    let html = "";
+    let range = null;
+
+    const selection = window.getSelection();
+    if (selection) {
+      text = selection.toString().trim();
+      if (text) {
+        if (typeof selection.getComposedRanges === "function") {
+          const shadowRoots = getAllShadowRoots();
+          const composedRanges = selection.getComposedRanges({ shadowRoots });
+          if (composedRanges && composedRanges.length > 0) {
+            const staticRange = composedRanges[0];
+            try {
+              range = document.createRange();
+              range.setStart(staticRange.startContainer, staticRange.startOffset);
+              range.setEnd(staticRange.endContainer, staticRange.endOffset);
+            } catch (e) {
+              range = null;
+            }
+          }
+        }
+        if (!range && selection.rangeCount > 0) {
+          range = selection.getRangeAt(0);
+        }
+      }
+    }
+
+    if (!text) {
+      const activeEl = getDeepActiveElement();
+      if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) {
+        try {
+          const start = activeEl.selectionStart;
+          const end = activeEl.selectionEnd;
+          if (start !== undefined && end !== undefined && start !== end) {
+            text = activeEl.value.substring(start, end).trim();
+            html = text;
+          }
+        } catch (e) {}
+      }
+    }
+
+    if (range && !html) {
+      try {
+        const fragment = range.cloneContents();
+        const elementsToRemove = fragment.querySelectorAll("style, script");
+        elementsToRemove.forEach(el => el.remove());
+        const container = document.createElement("div");
+        container.appendChild(fragment);
+        html = container.innerHTML;
+      } catch (e) {
+        html = text;
+      }
+    }
+
+    return { text, html, range };
   };
 
   /**
@@ -908,21 +990,13 @@
     if (!isExtensionValid()) return;
     if (e.target.closest(".smart-copy-tooltip")) return;
 
-    const selection = window.getSelection();
-    if (selection.rangeCount === 0) {
-      removeTooltip();
-      return;
-    }
-
-    const range = selection.getRangeAt(0);
-    const selectedText = selection.toString().trim();
+    const { text: selectedText, html: selectedHtml } = getComposedSelection();
 
     if (selectedText.length === 0) {
       removeTooltip();
       return;
     }
 
-    const selectedHtml = getCleanHtmlFromRange(range);
     removeTooltip();
 
     chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
@@ -944,15 +1018,9 @@
       removeTooltip();
 
       setTimeout(() => {
-        const selection = window.getSelection();
-        if (selection.rangeCount === 0) return;
-
-        const range = selection.getRangeAt(0);
-        const selectedText = selection.toString().trim();
+        const { text: selectedText, html: selectedHtml } = getComposedSelection();
 
         if (selectedText.length === 0) return;
-
-        const selectedHtml = getCleanHtmlFromRange(range);
 
         chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
           if (chrome.runtime.lastError || !response || !response.isActive) return;
@@ -972,7 +1040,8 @@
   };
 
   const onDocumentFocusIn = (e) => {
-    const el = e.target;
+    const path = e.composedPath();
+    const el = path && path.length > 0 ? path[0] : e.target;
     if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) {
       lastActiveInput = el;
     }
