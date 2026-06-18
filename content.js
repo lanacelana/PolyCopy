@@ -338,6 +338,14 @@
     }
 
     if (iframeUrl) {
+      if (iframeUrl === "about:srcdoc" || iframeUrl === "about:blank" || iframeUrl.startsWith("about:")) {
+        for (const iframe of iframes) {
+          if (iframe.hasAttribute("srcdoc") || !iframe.src || iframe.src === "about:blank") {
+            return iframe;
+          }
+        }
+      }
+
       const cleanUrl = iframeUrl.split(/[?#]/)[0];
       for (const iframe of iframes) {
         try {
