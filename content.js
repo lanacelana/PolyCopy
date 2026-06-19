@@ -944,7 +944,7 @@
       chrome.storage.local.set({ textList: [] }, () => {
         if (chrome.runtime.lastError) return;
         showClearSuccessState();
-        triggerClipboardUpdate([], true);
+        triggerClipboardUpdate([], false);
       });
     };
 
