@@ -802,11 +802,17 @@
   const createFloatingMarkdownButton = () => {
     if (document.getElementById("smart-markdown-floating-container")) return;
 
+    let didDragActive = false;
+
     const btnPaste = el("button", {
       id: "smart-markdown-floating-btn",
       title: "Paste Clipboard as Markdown",
       onclick: (e) => {
         e.stopPropagation();
+        if (didDragActive) {
+          didDragActive = false;
+          return;
+        }
         handleFloatingButtonClick();
       }
     }, ["P"]);
@@ -816,6 +822,10 @@
       title: "Clear Clipboard Buffer",
       onclick: (e) => {
         e.stopPropagation();
+        if (didDragActive) {
+          didDragActive = false;
+          return;
+        }
         handleClearButtonClick();
       }
     }, ["C"]);
@@ -823,6 +833,12 @@
     const container = el("div", {
       id: "smart-markdown-floating-container"
     }, [btnPaste, btnClear]);
+
+    // Reset didDragActive state on every mousedown
+    container.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      didDragActive = false;
+    });
 
     // Query and set proper Zoom scale
     if (isExtensionValid()) {
@@ -963,8 +979,8 @@
       paddingYTop: 10,
       paddingYBottom: 10,
       dragClass: "dragging",
-      ignoredSelectors: ["button"],
       onDragEnd: ({ didDrag, rect }) => {
+        didDragActive = didDrag;
         if (didDrag) {
           const viewportW = window.innerWidth;
           const viewportH = window.innerHeight;
