@@ -43,6 +43,9 @@
 
   // Perform startup scan to remove any lingering buttons/tooltips from previous installs
   try {
+    const lingeringContainer = document.getElementById("smart-markdown-floating-container");
+    if (lingeringContainer) lingeringContainer.remove();
+
     const lingeringBtn = document.getElementById("smart-markdown-floating-btn");
     if (lingeringBtn) lingeringBtn.remove();
     
@@ -794,46 +797,63 @@
   // ==========================================
 
   /**
-   * Instantiates the floating button 'M' for paste actions.
+   * Instantiates the floating action buttons container (Paste & Clear).
    */
   const createFloatingMarkdownButton = () => {
-    if (document.getElementById("smart-markdown-floating-btn")) return;
+    if (document.getElementById("smart-markdown-floating-container")) return;
 
-    const btn = el("button", {
+    const btnPaste = el("button", {
       id: "smart-markdown-floating-btn",
-      title: "Paste Clipboard as Markdown"
+      title: "Paste Clipboard as Markdown",
+      onclick: (e) => {
+        e.stopPropagation();
+        handleFloatingButtonClick();
+      }
     }, ["P"]);
+
+    const btnClear = el("button", {
+      id: "smart-markdown-clear-btn",
+      title: "Clear Clipboard Buffer",
+      onclick: (e) => {
+        e.stopPropagation();
+        handleClearButtonClick();
+      }
+    }, ["C"]);
+
+    const container = el("div", {
+      id: "smart-markdown-floating-container"
+    }, [btnPaste, btnClear]);
 
     // Query and set proper Zoom scale
     if (isExtensionValid()) {
       chrome.runtime.sendMessage({ action: "getZoom" }, (response) => {
         if (chrome.runtime.lastError) return;
         if (response && response.zoom !== undefined) {
-          btn.style.setProperty("--zoom-scale", 1 / response.zoom);
+          container.style.setProperty("--zoom-scale", 1 / response.zoom);
         }
       });
     }
 
-    floatBtn = btn;
+    floatBtn = container;
     window.addEventListener("resize", onWindowResize);
 
-    // Recover button coordinates
+    // Recover container coordinates
     if (isExtensionValid()) {
       chrome.storage.local.get({ floatBtnPosition: null }, (data) => {
         if (chrome.runtime.lastError) return;
         if (data.floatBtnPosition) {
           const pos = data.floatBtnPosition;
           if (pos.sideX && pos.sideY) {
-            btn.style.left = pos.sideX === "left" ? `${pos.distanceX}px` : "auto";
-            btn.style.right = pos.sideX === "right" ? `${pos.distanceX}px` : "auto";
-            btn.style.top = pos.sideY === "top" ? `${pos.distanceY}px` : "auto";
-            btn.style.bottom = pos.sideY === "bottom" ? `${pos.distanceY}px` : "auto";
+            container.style.left = pos.sideX === "left" ? `${pos.distanceX}px` : "auto";
+            container.style.right = pos.sideX === "right" ? `${pos.distanceX}px` : "auto";
+            container.style.top = pos.sideY === "top" ? `${pos.distanceY}px` : "auto";
+            container.style.bottom = pos.sideY === "bottom" ? `${pos.distanceY}px` : "auto";
           } else if (pos.x !== undefined && pos.y !== undefined) {
             // Old positioning fallback
-            btn.style.right = "auto";
-            btn.style.bottom = "auto";
-            btn.style.left = `${pos.x}px`;
-            btn.style.top = `${pos.y}px`;
+            container.style.right = "auto";
+            container.style.bottom = "auto";
+            container.style.left = `${pos.x}px`;
+            container.style.top = `${pos.y}px`;
           }
         }
         setTimeout(clampButtonToViewport, 100);
@@ -901,29 +921,54 @@
     };
 
     /**
+     * Clears the copied text buffer.
+     */
+    const handleClearButtonClick = () => {
+      if (!chrome.runtime?.id) return;
+      chrome.storage.local.set({ textList: [] }, () => {
+        if (chrome.runtime.lastError) return;
+        showClearSuccessState();
+        triggerClipboardUpdate([], true);
+      });
+    };
+
+    /**
      * Shows visual tick animation on success.
      */
     const showSuccessState = () => {
-      btn.innerHTML = "✓";
-      btn.classList.add("success");
+      btnPaste.innerHTML = "✓";
+      btnPaste.classList.add("success");
       setTimeout(() => {
-        btn.innerHTML = "P";
-        btn.classList.remove("success");
+        btnPaste.innerHTML = "P";
+        btnPaste.classList.remove("success");
       }, 1000);
     };
 
-    // Bind dragging triggers
-    floatBtnDragCleanup = makeElementDraggable(btn, {
+    /**
+     * Shows visual tick animation on clearing.
+     */
+    const showClearSuccessState = () => {
+      btnClear.innerHTML = "✓";
+      btnClear.classList.add("success");
+      setTimeout(() => {
+        btnClear.innerHTML = "C";
+        btnClear.classList.remove("success");
+      }, 1000);
+    };
+
+    // Bind dragging triggers to container
+    floatBtnDragCleanup = makeElementDraggable(container, {
       dragThreshold: 5,
       paddingX: 10,
       paddingYTop: 10,
       paddingYBottom: 10,
       dragClass: "dragging",
+      ignoredSelectors: ["button"],
       onDragEnd: ({ didDrag, rect }) => {
         if (didDrag) {
           const viewportW = window.innerWidth;
           const viewportH = window.innerHeight;
-          const btnW = rect.width || 30;
+          const btnW = rect.width || 66; // container width (2 x 30px + gap)
           const btnH = rect.height || 30;
 
           const centerX = rect.left + btnW / 2;
@@ -940,19 +985,17 @@
             });
           }
 
-          btn.style.left = sideX === "left" ? `${distanceX}px` : "auto";
-          btn.style.right = sideX === "right" ? `${distanceX}px` : "auto";
-          btn.style.top = sideY === "top" ? `${distanceY}px` : "auto";
-          btn.style.bottom = sideY === "bottom" ? `${distanceY}px` : "auto";
-        } else {
-          handleFloatingButtonClick();
+          container.style.left = sideX === "left" ? `${distanceX}px` : "auto";
+          container.style.right = sideX === "right" ? `${distanceX}px` : "auto";
+          container.style.top = sideY === "top" ? `${distanceY}px` : "auto";
+          container.style.bottom = sideY === "bottom" ? `${distanceY}px` : "auto";
         }
       }
     });
 
     const injectBtn = () => {
       if (document.body) {
-        document.body.appendChild(btn);
+        document.body.appendChild(container);
       } else {
         setTimeout(injectBtn, 50);
       }
@@ -972,7 +1015,7 @@
       activeTabIds: {}
     }, (data) => {
       if (chrome.runtime.lastError) return;
-      const btn = document.getElementById("smart-markdown-floating-btn");
+      const container = document.getElementById("smart-markdown-floating-container");
       
       let isActive = false;
       if (data.enabled) {
@@ -1003,14 +1046,14 @@
       }
 
       if (isActive) {
-        if (!btn) {
+        if (!container) {
           createFloatingMarkdownButton();
         } else {
-          btn.style.display = "flex";
+          container.style.display = "flex";
         }
       } else {
-        if (btn) {
-          btn.style.display = "none";
+        if (container) {
+          container.style.display = "none";
         }
       }
     });
@@ -1216,9 +1259,9 @@
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!isExtensionValid()) return;
     if (message.action === "zoomUpdated") {
-      const btn = document.getElementById("smart-markdown-floating-btn");
-      if (btn && message.zoom !== undefined) {
-        btn.style.setProperty("--zoom-scale", 1 / message.zoom);
+      const container = document.getElementById("smart-markdown-floating-container");
+      if (container && message.zoom !== undefined) {
+        container.style.setProperty("--zoom-scale", 1 / message.zoom);
       }
     } else if (message.action === "showIframeSelection") {
       if (window === window.top) {
@@ -1292,9 +1335,9 @@
     iframeObserver = new MutationObserver((mutations) => {
       let shouldRecheck = false;
       
-      // 1. If our button should be active but is deleted from the body, trigger re-injection
-      const btn = document.getElementById("smart-markdown-floating-btn");
-      if (!btn) {
+      // 1. If our container should be active but is deleted from the body, trigger re-injection
+      const container = document.getElementById("smart-markdown-floating-container");
+      if (!container) {
         shouldRecheck = true;
       }
 

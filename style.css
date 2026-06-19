@@ -198,58 +198,76 @@
    3. STANDALONE FLOATING BUTTON ('M')
    ========================================== */
 
-#smart-markdown-floating-btn {
-  --bg-gold: #dfff00;
-  --border-dark: #0b2114;
-  --text-dark: #0b2114;
-  
+#smart-markdown-floating-container {
   position: fixed;
   z-index: 2147483647; /* Ensure button stays on top of page content */
   right: 20px;
   bottom: 85px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  transform: scale(var(--zoom-scale, 1));
+  transform-origin: bottom right;
+  opacity: 0.65;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: move;
+  padding: 4px;
+}
+
+#smart-markdown-floating-container:hover {
+  opacity: 1;
+}
+
+#smart-markdown-floating-container.dragging {
+  transition: none !important;
+}
+
+#smart-markdown-floating-container button {
+  --bg-gold: #dfff00;
+  --border-dark: #0b2114;
+  --text-dark: #0b2114;
+  
   width: 30px;
   height: 30px;
   border-radius: 50%;
   padding: 0;
-  background-color: var(--bg-gold) !important;
   border: 2px solid var(--border-dark) !important;
-  color: var(--text-dark) !important;
   font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 700 !important;
   font-size: 12px !important;
-  cursor: move !important;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 1px rgba(223, 255, 0, 0.2);
-  transform: scale(var(--zoom-scale, 1));
-  opacity: 0.65;
-  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
-  user-select: none;
-  -webkit-user-select: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-#smart-markdown-floating-btn:hover {
+#smart-markdown-floating-container button:hover {
+  transform: scale(1.08);
+}
+
+#smart-markdown-floating-container button:active {
+  transform: scale(0.95);
+}
+
+#smart-markdown-floating-btn {
   background-color: var(--bg-gold) !important;
-  border-color: var(--border-dark) !important;
   color: var(--text-dark) !important;
-  opacity: 1;
-  transform: scale(calc(var(--zoom-scale, 1) * 1.08));
 }
 
-#smart-markdown-floating-btn:active {
-  transform: scale(calc(var(--zoom-scale, 1) * 0.95)) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-  opacity: 0.9 !important;
+#smart-markdown-clear-btn {
+  background-color: #8b2635 !important;
+  color: white !important;
 }
 
-#smart-markdown-floating-btn.success {
+#smart-markdown-floating-container button.success {
   background-color: #10b981 !important;
   border-color: #10b981 !important;
   color: white !important;
-  opacity: 1 !important;
-}
-
-#smart-markdown-floating-btn.dragging {
-  transition: none !important;
 }
