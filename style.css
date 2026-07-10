@@ -203,26 +203,34 @@
   z-index: 2147483647; /* Ensure button stays on top of page content */
   right: 20px;
   bottom: 85px;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  width: 38px;
+  height: 38px;
+  padding: 4px;
   transform: scale(var(--zoom-scale, 1));
   transform-origin: bottom right;
   opacity: 0.65;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, transform 0.2s ease;
   user-select: none;
   -webkit-user-select: none;
   cursor: move;
-  padding: 4px;
+  box-sizing: border-box;
 }
 
-#smart-markdown-floating-container:hover {
+#smart-markdown-floating-container:hover,
+#smart-markdown-floating-container.dragging {
+  width: 110px;
   opacity: 1;
 }
 
-#smart-markdown-floating-container.dragging {
-  transition: none !important;
+#smart-markdown-floating-container.side-left {
+  transform-origin: bottom left;
+}
+
+#smart-markdown-floating-container.side-right {
+  transform-origin: bottom right;
 }
 
 #smart-markdown-floating-container button {
@@ -230,6 +238,7 @@
   --border-dark: #0b2114;
   --text-dark: #0b2114;
   
+  grid-area: 1 / 1;
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -243,7 +252,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 1px rgba(223, 255, 0, 0.2);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, background-color 0.2s ease;
   margin: 0;
   box-sizing: border-box;
 }
@@ -259,15 +268,55 @@
 #smart-markdown-floating-btn {
   background-color: var(--bg-gold) !important;
   color: var(--text-dark) !important;
+  z-index: 3 !important;
+}
+
+#smart-markdown-paste-plain-btn {
+  background-color: #2c6a43 !important;
+  color: var(--text-light) !important;
+  z-index: 2 !important;
 }
 
 #smart-markdown-clear-btn {
   background-color: #8b2635 !important;
   color: white !important;
+  z-index: 1 !important;
+}
+
+/* Fan out directions: default/right side fans out to the left */
+#smart-markdown-floating-container:hover #smart-markdown-paste-plain-btn,
+#smart-markdown-floating-container.dragging #smart-markdown-paste-plain-btn {
+  transform: translateX(-36px);
+}
+
+#smart-markdown-floating-container:hover #smart-markdown-clear-btn,
+#smart-markdown-floating-container.dragging #smart-markdown-clear-btn {
+  transform: translateX(-72px);
+}
+
+/* left side fans out to the right */
+#smart-markdown-floating-container.side-left:hover #smart-markdown-paste-plain-btn,
+#smart-markdown-floating-container.side-left.dragging #smart-markdown-paste-plain-btn {
+  transform: translateX(36px);
+}
+
+#smart-markdown-floating-container.side-left:hover #smart-markdown-clear-btn,
+#smart-markdown-floating-container.side-left.dragging #smart-markdown-clear-btn {
+  transform: translateX(72px);
 }
 
 #smart-markdown-floating-container button.success {
   background-color: #10b981 !important;
   border-color: #10b981 !important;
   color: white !important;
+}
+
+/* Force container and buttons back into stacked state on click release */
+#smart-markdown-floating-container.force-stacked {
+  width: 38px !important;
+  opacity: 0.65 !important;
+}
+
+#smart-markdown-floating-container.force-stacked button {
+  transform: translateX(0) !important;
 }

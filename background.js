@@ -170,6 +170,21 @@
   // ==========================================
 
   let creatingOffscreenPromise = null;
+  let offscreenTimeout = null;
+
+  /**
+   * Resets the inactivity timer for the offscreen document.
+   * Closes the document if there has been no clipboard activity for 30 seconds.
+   */
+  const resetOffscreenTimeout = () => {
+    if (offscreenTimeout) {
+      clearTimeout(offscreenTimeout);
+    }
+    offscreenTimeout = setTimeout(() => {
+      chrome.offscreen.closeDocument().catch(() => {});
+      offscreenTimeout = null;
+    }, 10000); // 10 seconds of inactivity
+  };
 
   /**
    * Safe check and creation of offscreen document context.
@@ -196,11 +211,15 @@
       });
       await creatingOffscreenPromise;
       creatingOffscreenPromise = null;
+      
+      // Start inactivity timer upon successful creation
+      resetOffscreenTimeout();
     }
   };
 
   /**
-   * Spins up the offscreen document, requests clipboard data, and terminates it.
+   * Spin up or query the offscreen document, retrieve clipboard contents,
+   * and update the inactivity timer to avoid immediate termination.
    * @returns {Promise<Object>}
    */
   const readClipboardFromOffscreen = async () => {
@@ -212,12 +231,19 @@
         target: 'offscreen',
         action: 'read-clipboard'
       });
+      
+      // Reset inactivity timer after a successful message round-trip
+      resetOffscreenTimeout();
+
       return response || { success: false, error: "No response from offscreen document" };
     } catch (err) {
-      return { success: false, error: err.message };
-    } finally {
-      // Close the document to keep resources light
+      // Close the document immediately if an error occurs
       await chrome.offscreen.closeDocument().catch(() => {});
+      if (offscreenTimeout) {
+        clearTimeout(offscreenTimeout);
+        offscreenTimeout = null;
+      }
+      return { success: false, error: err.message };
     }
   };
 
@@ -268,6 +294,14 @@
       });
       return true; // Indicates asynchronous response
     }
+
+    // Pre-warm the offscreen document on user intent (e.g. hovered button)
+    if (request.action === "prewarmClipboard") {
+      setupOffscreenDocument('offscreen.html').catch(() => {});
+      sendResponse({ success: true });
+      return false;
+    }
+
     // Return sender tab details
     if (request.action === "getTabInfo") {
       sendResponse({ tabId: sender.tab?.id });
@@ -305,13 +339,21 @@
           return;
         }
         
+        let isActive = false;
         if (!data.enabled) {
-          sendResponse({ isActive: false });
+          isActive = false;
         } else if (data.mode === "global") {
-          sendResponse({ isActive: true });
+          isActive = true;
         } else {
-          sendResponse({ isActive: !!data.activeTabIds[tabId] });
+          isActive = !!data.activeTabIds[tabId];
         }
+
+        // Pre-warm the offscreen document because the user is active on this page
+        if (isActive) {
+          setupOffscreenDocument('offscreen.html').catch(() => {});
+        }
+
+        sendResponse({ isActive });
       });
       return true; // Indicates asynchronous response
     }

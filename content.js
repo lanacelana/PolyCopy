@@ -518,7 +518,17 @@
     } else {
       // Inline document editing element (e.g. Google Docs, rich text textareas)
       try {
-        document.execCommand("insertText", false, text);
+        // Split by newline and insert line-by-line using execCommand to prevent
+        // browsers from truncating or ignoring everything after the first newline.
+        const lines = text.split(/\r?\n/);
+        lines.forEach((line, index) => {
+          if (index > 0) {
+            document.execCommand("insertLineBreak", false);
+          }
+          if (line) {
+            document.execCommand("insertText", false, line);
+          }
+        });
         return true;
       } catch (e) {
         console.error("[Tooltip] execCommand insertText fallback failed:", e);
@@ -804,6 +814,10 @@
 
     let didDragActive = false;
 
+    const collapseContainer = () => {
+      container.classList.add("force-stacked");
+    };
+
     const btnPaste = el("button", {
       id: "smart-markdown-floating-btn",
       title: "Paste Clipboard as Markdown",
@@ -814,8 +828,23 @@
           return;
         }
         handleFloatingButtonClick();
+        collapseContainer();
       }
     }, ["P"]);
+
+    const btnPastePlain = el("button", {
+      id: "smart-markdown-paste-plain-btn",
+      title: "Paste Clipboard as Plain Text",
+      onclick: (e) => {
+        e.stopPropagation();
+        if (didDragActive) {
+          didDragActive = false;
+          return;
+        }
+        handleFloatingPastePlainClick();
+        collapseContainer();
+      }
+    }, ["T"]);
 
     const btnClear = el("button", {
       id: "smart-markdown-clear-btn",
@@ -827,17 +856,31 @@
           return;
         }
         handleClearButtonClick();
+        collapseContainer();
       }
     }, ["C"]);
 
     const container = el("div", {
-      id: "smart-markdown-floating-container"
-    }, [btnPaste, btnClear]);
+      id: "smart-markdown-floating-container",
+      className: "side-right"
+    }, [btnPaste, btnPastePlain, btnClear]);
 
-    // Reset didDragActive state on every mousedown
+    // Reset didDragActive state and remove force-stacked on mousedown
     container.addEventListener("mousedown", (e) => {
       if (e.button !== 0) return;
       didDragActive = false;
+      container.classList.remove("force-stacked");
+    });
+
+    container.addEventListener("mouseleave", () => {
+      container.classList.remove("force-stacked");
+    });
+
+    // Pre-warm offscreen document on hover
+    container.addEventListener("mouseenter", () => {
+      if (isExtensionValid()) {
+        chrome.runtime.sendMessage({ action: "prewarmClipboard" });
+      }
     });
 
     // Query and set proper Zoom scale
@@ -864,6 +907,8 @@
             container.style.right = pos.sideX === "right" ? `${pos.distanceX}px` : "auto";
             container.style.top = pos.sideY === "top" ? `${pos.distanceY}px` : "auto";
             container.style.bottom = pos.sideY === "bottom" ? `${pos.distanceY}px` : "auto";
+            container.classList.remove("side-left", "side-right");
+            container.classList.add(`side-${pos.sideX}`);
           } else if (pos.x !== undefined && pos.y !== undefined) {
             // Old positioning fallback
             container.style.right = "auto";
@@ -893,7 +938,7 @@
 
           // If htmlText contains formatted HTML, convert it to markdown
           if (htmlText && htmlText.trim().length > 0) {
-            const markdownText = convertToMarkdown("", htmlText, "");
+            const markdownText = convertToMarkdown(plainText, htmlText, "");
             
             // Re-write the converted markdown back to clipboard as both plain and formatted text
             if (navigator.clipboard && window.isSecureContext) {
@@ -937,6 +982,30 @@
     };
 
     /**
+     * Pastes clipboard content as raw Plain Text and inputs it into targeted input field.
+     */
+    const handleFloatingPastePlainClick = () => {
+      if (!chrome.runtime?.id) return;
+
+      chrome.runtime.sendMessage({ action: "readClipboard" }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error("[Floating Button] Clipboard request failed:", chrome.runtime.lastError);
+          return;
+        }
+
+        if (response && response.success) {
+          const { plainText } = response;
+          if (plainText) {
+            insertTextAtCursor(plainText);
+            showPlainSuccessState();
+          }
+        } else {
+          console.error("[Floating Button] Offscreen clipboard read failed:", response?.error);
+        }
+      });
+    };
+
+    /**
      * Clears the copied text buffer.
      */
     const handleClearButtonClick = () => {
@@ -957,6 +1026,18 @@
       setTimeout(() => {
         btnPaste.innerHTML = "P";
         btnPaste.classList.remove("success");
+      }, 1000);
+    };
+
+    /**
+     * Shows visual tick animation on plain text paste success.
+     */
+    const showPlainSuccessState = () => {
+      btnPastePlain.innerHTML = "✓";
+      btnPastePlain.classList.add("success");
+      setTimeout(() => {
+        btnPastePlain.innerHTML = "T";
+        btnPastePlain.classList.remove("success");
       }, 1000);
     };
 
@@ -984,7 +1065,7 @@
         if (didDrag) {
           const viewportW = window.innerWidth;
           const viewportH = window.innerHeight;
-          const btnW = rect.width || 66; // container width (2 x 30px + gap)
+          const btnW = rect.width || 102; // container width (3 x 30px + 2 x gap)
           const btnH = rect.height || 30;
 
           const centerX = rect.left + btnW / 2;
@@ -1005,6 +1086,8 @@
           container.style.right = sideX === "right" ? `${distanceX}px` : "auto";
           container.style.top = sideY === "top" ? `${distanceY}px` : "auto";
           container.style.bottom = sideY === "bottom" ? `${distanceY}px` : "auto";
+          container.classList.remove("side-left", "side-right");
+          container.classList.add(`side-${sideX}`);
         }
       }
     });
@@ -1065,7 +1148,7 @@
         if (!container) {
           createFloatingMarkdownButton();
         } else {
-          container.style.display = "flex";
+          container.style.display = "";
         }
       } else {
         if (container) {
@@ -1123,6 +1206,8 @@
       floatBtn.style.right = sideX === "right" ? `${distanceX}px` : "auto";
       floatBtn.style.top = sideY === "top" ? `${distanceY}px` : "auto";
       floatBtn.style.bottom = sideY === "bottom" ? `${distanceY}px` : "auto";
+      floatBtn.classList.remove("side-left", "side-right");
+      floatBtn.classList.add(`side-${sideX}`);
     }
   };
 
