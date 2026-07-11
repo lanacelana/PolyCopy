@@ -841,10 +841,17 @@
   const createFloatingMarkdownButton = () => {
     if (document.getElementById("smart-markdown-floating-container")) return;
 
+    let collapseTimeout = null;
     let didDragActive = false;
 
     const collapseContainer = () => {
-      container.classList.add("force-stacked");
+      if (collapseTimeout) {
+        clearTimeout(collapseTimeout);
+      }
+      collapseTimeout = setTimeout(() => {
+        container.classList.add("force-stacked");
+        collapseTimeout = null;
+      }, 1200); // 1.2s delay for visual feedback before collapsing back
     };
 
     const svgNS = "http://www.w3.org/2000/svg";
@@ -992,8 +999,12 @@
       container.classList.remove("force-stacked");
     });
 
-    // Pre-warm offscreen document on hover
+    // Pre-warm offscreen document on hover, and clear pending collapse timeout
     container.addEventListener("mouseenter", () => {
+      if (collapseTimeout) {
+        clearTimeout(collapseTimeout);
+        collapseTimeout = null;
+      }
       if (isExtensionValid()) {
         chrome.runtime.sendMessage({ action: "prewarmClipboard" });
       }
@@ -1133,14 +1144,33 @@
       });
     };
 
+    const createCheckmarkSvg = () => {
+      const svgCheck = document.createElementNS(svgNS, "svg");
+      svgCheck.setAttribute("width", "13");
+      svgCheck.setAttribute("height", "13");
+      svgCheck.setAttribute("viewBox", "0 0 24 24");
+      svgCheck.setAttribute("fill", "none");
+      svgCheck.setAttribute("stroke", "currentColor");
+      svgCheck.setAttribute("stroke-width", "3");
+      svgCheck.setAttribute("stroke-linecap", "round");
+      svgCheck.setAttribute("stroke-linejoin", "round");
+      
+      const checkPath = document.createElementNS(svgNS, "polyline");
+      checkPath.setAttribute("points", "20 6 9 17 4 12");
+      svgCheck.appendChild(checkPath);
+      return svgCheck;
+    };
+
     /**
      * Shows visual tick animation on success.
      */
     const showSuccessState = () => {
-      btnPaste.innerHTML = "✓";
+      btnPaste.innerHTML = "";
+      btnPaste.appendChild(createCheckmarkSvg());
       btnPaste.classList.add("success");
       setTimeout(() => {
-        btnPaste.innerHTML = "P";
+        btnPaste.innerHTML = "";
+        btnPaste.appendChild(svgPaste);
         btnPaste.classList.remove("success");
       }, 1000);
     };
@@ -1149,10 +1179,12 @@
      * Shows visual tick animation on plain text paste success.
      */
     const showPlainSuccessState = () => {
-      btnPastePlain.innerHTML = "✓";
+      btnPastePlain.innerHTML = "";
+      btnPastePlain.appendChild(createCheckmarkSvg());
       btnPastePlain.classList.add("success");
       setTimeout(() => {
-        btnPastePlain.innerHTML = "T";
+        btnPastePlain.innerHTML = "";
+        btnPastePlain.appendChild(svgText);
         btnPastePlain.classList.remove("success");
       }, 1000);
     };
@@ -1161,10 +1193,12 @@
      * Shows visual tick animation on clearing.
      */
     const showClearSuccessState = () => {
-      btnClear.innerHTML = "✓";
+      btnClear.innerHTML = "";
+      btnClear.appendChild(createCheckmarkSvg());
       btnClear.classList.add("success");
       setTimeout(() => {
-        btnClear.innerHTML = "C";
+        btnClear.innerHTML = "";
+        btnClear.appendChild(svgClear);
         btnClear.classList.remove("success");
       }, 1000);
     };
