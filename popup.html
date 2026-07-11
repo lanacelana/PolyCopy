@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-main: #0b2114;         /* Deepest Acid Forest (almost black-green) */
@@ -21,53 +21,87 @@
       font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       padding: 16px;
       margin: 0;
-      background-color: var(--bg-main);
+      background: radial-gradient(circle at 50% 0%, #0d2919 0%, #05140b 100%);
       color: var(--text-light);
+      box-sizing: border-box;
     }
     
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     
     .header h3 {
       margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--accent-gold);
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--text-light);
       letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+    }
+    .header h3 .brand-accent {
+      font-weight: 800;
+      color: var(--accent-gold);
     }
 
     /* Header Status Badge */
     .status-badge {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 20px;
-      background-color: rgba(204, 164, 124, 0.12);
+      padding: 4px 10px;
+      border-radius: 30px;
+      background-color: rgba(223, 255, 0, 0.08);
       color: var(--accent-gold);
-      border: 1px solid var(--accent-gold);
-      letter-spacing: 0.5px;
+      border: 1px solid rgba(223, 255, 0, 0.3);
+      letter-spacing: 1px;
       text-transform: uppercase;
       transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 0 10px rgba(223, 255, 0, 0.05);
+    }
+    .status-badge::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      background-color: var(--accent-gold);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 6px var(--accent-gold);
+      animation: pulse-glow 2s infinite ease-in-out;
     }
     .status-badge.off {
-      background-color: rgba(139, 38, 53, 0.12);
+      background-color: rgba(239, 68, 68, 0.08);
       color: #ef4444;
-      border-color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.3);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.05);
+    }
+    .status-badge.off::before {
+      background-color: #ef4444;
+      box-shadow: 0 0 6px #ef4444;
+      animation: none;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.1); }
     }
 
     /* Mode Selector Buttons */
     .mode-selector {
       display: flex;
-      background: var(--bg-item);
-      border: 1px solid var(--border-item);
+      background: rgba(26, 77, 46, 0.25);
+      border: 1px solid rgba(44, 106, 67, 0.4);
       padding: 4px;
-      border-radius: 10px;
+      border-radius: 12px;
       margin-bottom: 12px;
       gap: 4px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     .mode-btn {
@@ -75,52 +109,56 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 8px 4px;
-      font-size: 11px;
-      font-weight: 600;
+      padding: 10px 4px;
+      font-size: 10.5px;
+      font-weight: 500;
       font-family: 'Roboto', sans-serif;
       border-radius: 8px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .mode-btn:hover {
       color: var(--text-light);
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.04);
     }
     
     .mode-btn.active {
       background: var(--border-item);
       color: var(--accent-gold);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      font-weight: 600;
     }
 
-    .mode-btn.active .icon {
-      filter: drop-shadow(0 0 4px var(--accent-gold));
+    .icon-svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      transition: transform 0.25s ease, filter 0.25s ease;
     }
-
-    .mode-btn .icon {
-      font-size: 14px;
+    .mode-btn:hover .icon-svg {
+      transform: scale(1.1);
+    }
+    .mode-btn.active .icon-svg {
+      filter: drop-shadow(0 0 3px var(--accent-gold));
     }
 
     /* Tab Status Card */
     .tab-status-card {
-      background: linear-gradient(135deg, rgba(27, 34, 44, 0.6) 0%, rgba(41, 50, 65, 0.3) 100%);
-      border: 1px dashed var(--accent-gold);
+      background: rgba(26, 77, 46, 0.15);
+      border: 1px solid rgba(223, 255, 0, 0.2);
       border-radius: 12px;
-      padding: 12px;
+      padding: 10px 12px;
       margin-bottom: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      opacity: 1;
-      max-height: 80px;
-      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
     .tab-status-card.hidden {
@@ -135,7 +173,7 @@
     }
 
     .tab-status-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text-light);
     }
@@ -152,8 +190,8 @@
     .switch {
       position: relative;
       display: inline-block;
-      width: 44px;
-      height: 22px;
+      width: 40px;
+      height: 20px;
     }
     .switch input {
       opacity: 0;
@@ -164,16 +202,16 @@
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: var(--bg-item);
+      background-color: rgba(26, 77, 46, 0.4);
       border: 1px solid var(--border-item);
       transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-      border-radius: 22px;
+      border-radius: 20px;
     }
     .slider:before {
       position: absolute;
       content: "";
-      height: 14px;
-      width: 14px;
+      height: 12px;
+      width: 12px;
       left: 3px;
       bottom: 3px;
       background-color: var(--text-muted);
@@ -181,34 +219,36 @@
       border-radius: 50%;
     }
     input:checked + .slider {
-      background-color: rgba(204, 164, 124, 0.15);
+      background-color: rgba(223, 255, 0, 0.1);
       border-color: var(--accent-gold);
     }
     input:checked + .slider:before {
-      transform: translateX(22px);
+      transform: translateX(20px);
       background-color: var(--accent-gold);
       box-shadow: 0 0 6px var(--accent-gold);
     }
 
+    /* Copy Queue List Container */
     .list-container {
-      max-height: 200px;
+      max-height: 180px;
       overflow-y: auto;
-      border: 1px solid var(--border-item);
+      border: 1px solid rgba(44, 106, 67, 0.3);
       border-radius: 12px;
       padding: 8px;
-      margin-bottom: 12px;
-      background-color: rgba(27, 34, 44, 0.3);
+      margin-bottom: 14px;
+      background-color: rgba(0, 0, 0, 0.25);
       display: flex;
       flex-direction: column;
       gap: 6px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
     /* Custom Scrollbar */
     .list-container::-webkit-scrollbar {
-      width: 4px;
+      width: 5px;
     }
     .list-container::-webkit-scrollbar-thumb {
-      background: var(--border-item);
+      background: rgba(44, 106, 67, 0.6);
       border-radius: 10px;
     }
     .list-container::-webkit-scrollbar-thumb:hover {
@@ -220,53 +260,88 @@
       justify-content: space-between;
       align-items: center;
       padding: 8px 12px;
-      background: var(--bg-item);
-      border: 1px solid var(--border-item);
-      border-radius: 8px;
+      background: rgba(26, 77, 46, 0.3);
+      border: 1px solid rgba(44, 106, 67, 0.4);
+      border-radius: 10px;
       font-size: 12px;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       color: var(--text-light);
     }
     .text-item:hover {
-      border-color: var(--accent-gold);
+      border-color: rgba(223, 255, 0, 0.4);
+      background: rgba(26, 77, 46, 0.45);
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     }
     .text-item.type-link {
-      background: var(--accent-gold);
-      border-color: var(--accent-gold);
-      color: #0b2114;
+      background: rgba(223, 255, 0, 0.08);
+      border-color: rgba(223, 255, 0, 0.3);
+      color: var(--accent-gold);
     }
     .text-item.type-link .text-content {
-      color: #0b2114;
-      font-weight: 600;
+      color: var(--accent-gold);
+      font-weight: 500;
     }
     .text-item.type-link .delete-btn {
-      color: rgba(11, 33, 20, 0.6);
+      color: rgba(223, 255, 0, 0.6);
     }
     .text-item.type-link .delete-btn:hover {
-      color: #8b2635;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
     }
+    
+    .item-content-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 85%;
+      overflow: hidden;
+    }
+    
+    .item-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      background: rgba(223, 255, 0, 0.1);
+      color: var(--accent-gold);
+      border: 1px solid rgba(223, 255, 0, 0.25);
+      border-radius: 5px;
+      font-size: 9px;
+      font-weight: 700;
+      font-family: monospace;
+      flex-shrink: 0;
+    }
+    .type-link .item-index {
+      background: rgba(223, 255, 0, 0.2);
+      border-color: rgba(223, 255, 0, 0.4);
+    }
+
     .text-content {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      width: 85%;
       color: inherit;
     }
+
     .delete-btn {
       background: none;
       border: none;
       color: var(--text-muted);
-      font-weight: bold;
       cursor: pointer;
-      font-size: 16px;
-      padding: 0;
-      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: 50%;
       transition: all 0.2s ease;
     }
     .delete-btn:hover {
       color: #ef4444;
-      transform: scale(1.2);
+      background: rgba(239, 68, 68, 0.10);
+      transform: scale(1.1) rotate(90deg);
     }
     
     .actions {
@@ -277,28 +352,34 @@
       flex: 1;
       padding: 10px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: 600;
       font-size: 13px;
       font-family: 'Roboto', sans-serif;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .clear-btn {
-      background: var(--btn-clear-bg);
-      color: #ffffff;
+      background: rgba(139, 38, 53, 0.2);
+      border: 1px solid rgba(139, 38, 53, 0.5) !important;
+      color: #ff8e9e;
     }
     .clear-btn:hover {
-      filter: brightness(1.15);
+      background: rgba(139, 38, 53, 0.45);
+      border-color: #ef4444 !important;
+      color: #ffffff;
       transform: translateY(-1px);
+      box-shadow: 0 6px 15px rgba(239, 68, 68, 0.2);
     }
     .copy-all-btn {
-      background: var(--accent-gold);
+      background: linear-gradient(135deg, var(--accent-gold) 0%, #b8df00 100%);
       color: var(--bg-main);
     }
     .copy-all-btn:hover {
-      filter: brightness(1.1);
       transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(223, 255, 0, 0.35);
+      filter: brightness(1.05);
     }
     .copy-all-btn:active, .clear-btn:active {
       transform: translateY(0);
@@ -306,32 +387,66 @@
     
     .footer {
       text-align: center;
-      margin-top: 12px;
-      font-size: 11px;
+      margin-top: 16px;
+      margin-bottom: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .footer .meta-info {
+      font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 8.5px;
       color: var(--text-muted);
-      letter-spacing: 0.5px;
+      opacity: 0.55;
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
     .footer .signature {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 3.5px;
+      margin-right: -3.5px;
+      text-decoration: none;
+      transition: all 0.2s ease-in-out;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+    .footer .signature:hover {
       color: var(--accent-gold);
-      font-weight: 600;
+      text-shadow: 0 0 8px rgba(223, 255, 0, 0.8);
+      transform: translateY(-1px);
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h3>Smart Multi-Copy</h3>
+    <h3>Poly<span class="brand-accent">Copy</span></h3>
     <span class="status-badge" id="globalStatus">Enabled</span>
   </div>
 
   <div class="mode-selector">
     <button class="mode-btn" id="modeGlobal" title="Active on all tabs">
-      <span class="icon">🌐</span> All Tabs
+      <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+      All Tabs
     </button>
     <button class="mode-btn" id="modeTab" title="Active on this tab only">
-      <span class="icon">📄</span> This Tab Only
+      <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+      </svg>
+      This Tab
     </button>
-    <button class="mode-btn" id="modeOff" title="Switch off the extension">
-      <span class="icon">🔌</span> Switch Off
+    <button class="mode-btn" id="modeOff" title="Disable highlight matching">
+      <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 10h-1.5c-.8 0-1.5-.7-1.5-1.5V6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v2.5C7 9.3 6.3 10 5.5 10H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2"></path>
+      </svg>
+      Switch Off
     </button>
   </div>
 
@@ -355,7 +470,8 @@
   </div>
   
   <div class="footer">
-    made by <span class="signature">lncln</span>
+    <div class="meta-info" id="metaInfo">v1.4 • UPDATED JUL 11, 2026</div>
+    <a href="https://github.com/lanacelana" target="_blank" class="signature" id="signatureLink">BY LNCLN</a>
   </div>
   <script src="popup.js"></script>
 </body>

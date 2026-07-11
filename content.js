@@ -372,32 +372,37 @@
   const handleShowIframeSelection = (data) => {
     const { text, html, clientX, clientY, iframeUrl, isKeyboard } = data;
     
-    let x = clientX;
-    let y = clientY;
-    
-    if (isKeyboard) {
-      const tooltipWidth = 240;
-      x = (window.innerWidth / 2) - (tooltipWidth / 2);
-      y = 80;
-    } else {
-      const iframeEl = findIframe(iframeUrl);
-      if (iframeEl) {
-        const rect = iframeEl.getBoundingClientRect();
-        x = rect.left + clientX;
-        y = rect.top + clientY;
-      } else {
-        // Fallback to center screen if iframe is missing/hidden
+    chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
+      if (chrome.runtime.lastError || !response || !response.isActive) return;
+      if (!isExtensionValid()) return;
+
+      let x = clientX;
+      let y = clientY;
+      
+      if (isKeyboard) {
         const tooltipWidth = 240;
         x = (window.innerWidth / 2) - (tooltipWidth / 2);
-        y = 120;
+        y = 80;
+      } else {
+        const iframeEl = findIframe(iframeUrl);
+        if (iframeEl) {
+          const rect = iframeEl.getBoundingClientRect();
+          x = rect.left + clientX;
+          y = rect.top + clientY;
+        } else {
+          // Fallback to center screen if iframe is missing/hidden
+          const tooltipWidth = 240;
+          x = (window.innerWidth / 2) - (tooltipWidth / 2);
+          y = 120;
+        }
       }
-    }
-    
-    removeTooltip();
-    
-    chrome.storage.local.get({ textList: [] }, (storageData) => {
-      if (chrome.runtime.lastError) return;
-      showTooltip(x, y, text, html, storageData.textList, !isKeyboard);
+      
+      removeTooltip();
+      
+      chrome.storage.local.get({ textList: [] }, (storageData) => {
+        if (chrome.runtime.lastError) return;
+        showTooltip(x, y, text, html, storageData.textList, !isKeyboard);
+      });
     });
   };
 
@@ -1231,14 +1236,19 @@
 
     if (window !== window.top) {
       // Delegate displaying the selection tooltip to the parent window
-      chrome.runtime.sendMessage({
-        action: "iframeSelection",
-        text: selectedText,
-        html: selectedHtml,
-        clientX: e.clientX,
-        clientY: e.clientY,
-        iframeUrl: window.location.href,
-        isKeyboard: false
+      chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
+        if (chrome.runtime.lastError || !response || !response.isActive) return;
+        if (!isExtensionValid()) return;
+
+        chrome.runtime.sendMessage({
+          action: "iframeSelection",
+          text: selectedText,
+          html: selectedHtml,
+          clientX: e.clientX,
+          clientY: e.clientY,
+          iframeUrl: window.location.href,
+          isKeyboard: false
+        });
       });
       return;
     }
@@ -1270,12 +1280,17 @@
 
         if (window !== window.top) {
           // Delegate displaying the selection tooltip to the parent window
-          chrome.runtime.sendMessage({
-            action: "iframeSelection",
-            text: selectedText,
-            html: selectedHtml,
-            iframeUrl: window.location.href,
-            isKeyboard: true
+          chrome.runtime.sendMessage({ action: "checkActive" }, (response) => {
+            if (chrome.runtime.lastError || !response || !response.isActive) return;
+            if (!isExtensionValid()) return;
+
+            chrome.runtime.sendMessage({
+              action: "iframeSelection",
+              text: selectedText,
+              html: selectedHtml,
+              iframeUrl: window.location.href,
+              isKeyboard: true
+            });
           });
           return;
         }

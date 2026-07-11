@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Smart Multi-Copy Highlight",
+  "name": "PolyCopy",
   "version": "1.4",
   "description": "Highlight multiple blocks of text to copy them all at once with clean style.",
   "author": "lncln",

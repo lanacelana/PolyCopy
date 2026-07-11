@@ -249,19 +249,54 @@
         data.textList.forEach((item, index) => {
           const cleanText = item.plain.replace(/^Source(?:, mate)?: .*?\n/, "").trim();
 
+          const indexSpan = el("span", {
+            className: "item-index"
+          }, [`${index + 1}`]);
+
           const textSpan = el("span", {
             className: "text-content",
             title: cleanText
-          }, [`${index + 1}. ${cleanText}`]);
+          }, [cleanText]);
+
+          const contentWrapper = el("div", {
+            className: "item-content-wrapper"
+          }, [indexSpan, textSpan]);
+
+          // Create SVG Close icon for the delete button
+          const svgNS = "http://www.w3.org/2000/svg";
+          const svgEl = document.createElementNS(svgNS, "svg");
+          svgEl.setAttribute("width", "10");
+          svgEl.setAttribute("height", "10");
+          svgEl.setAttribute("viewBox", "0 0 24 24");
+          svgEl.setAttribute("fill", "none");
+          svgEl.setAttribute("stroke", "currentColor");
+          svgEl.setAttribute("stroke-width", "3");
+          svgEl.setAttribute("stroke-linecap", "round");
+          svgEl.setAttribute("stroke-linejoin", "round");
+
+          const line1 = document.createElementNS(svgNS, "line");
+          line1.setAttribute("x1", "18");
+          line1.setAttribute("y1", "6");
+          line1.setAttribute("x2", "6");
+          line1.setAttribute("y2", "18");
+
+          const line2 = document.createElementNS(svgNS, "line");
+          line2.setAttribute("x1", "6");
+          line2.setAttribute("y1", "6");
+          line2.setAttribute("x2", "18");
+          line2.setAttribute("y2", "18");
+
+          svgEl.appendChild(line1);
+          svgEl.appendChild(line2);
 
           const delBtn = el("button", {
             className: "delete-btn",
             onclick: () => deleteItem(index)
-          }, ["×"]);
+          }, [svgEl]);
 
           const div = el("div", {
             className: `text-item${item.type === "link" ? " type-link" : ""}`
-          }, [textSpan, delBtn]);
+          }, [contentWrapper, delBtn]);
 
           listContainer.appendChild(div);
         });
@@ -317,6 +352,26 @@
           });
         });
       };
+    }
+
+    // Signature link click handler (ensures it opens in a new tab)
+    const signatureLink = document.getElementById("signatureLink");
+    if (signatureLink) {
+      signatureLink.onclick = (e) => {
+        e.preventDefault();
+        chrome.tabs.create({ url: signatureLink.href });
+      };
+    }
+
+    // Set version and last updated date dynamically from manifest
+    const metaInfo = document.getElementById("metaInfo");
+    if (metaInfo) {
+      try {
+        const manifestData = chrome.runtime.getManifest();
+        metaInfo.textContent = `v${manifestData.version} • UPDATED JUL 11, 2026`;
+      } catch (err) {
+        console.debug("[Popup] Failed to get manifest version:", err);
+      }
     }
 
     // Initialize list render on start

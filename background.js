@@ -129,6 +129,18 @@
     });
   });
 
+  // Disable extension when the browser starts up
+  chrome.runtime.onStartup.addListener(() => {
+    chrome.storage.local.set({ enabled: false }, () => {
+      const err = chrome.runtime.lastError;
+      if (err) {
+        console.debug(`[Background] Failed to disable on startup: ${err.message}`);
+      } else {
+        console.debug('[Background] Extension automatically disabled on browser startup.');
+      }
+    });
+  });
+
   // Purge tab active configurations when a tab is destroyed
   chrome.tabs.onRemoved.addListener((tabId) => {
     chrome.storage.local.get({ activeTabIds: {} }, (data) => {
@@ -256,16 +268,35 @@
     if (request.action === "iframeSelection") {
       const tabId = sender.tab?.id;
       if (tabId) {
-        chrome.tabs.sendMessage(tabId, {
-          action: "showIframeSelection",
-          text: request.text,
-          html: request.html,
-          clientX: request.clientX,
-          clientY: request.clientY,
-          iframeUrl: request.iframeUrl,
-          isKeyboard: request.isKeyboard
-        }, { frameId: 0 }, () => {
-          const err = chrome.runtime.lastError;
+        chrome.storage.local.get({
+          enabled: true,
+          mode: "global",
+          activeTabIds: {}
+        }, (data) => {
+          if (chrome.runtime.lastError) return;
+          
+          let isActive = false;
+          if (!data.enabled) {
+            isActive = false;
+          } else if (data.mode === "global") {
+            isActive = true;
+          } else {
+            isActive = !!data.activeTabIds[tabId];
+          }
+
+          if (isActive) {
+            chrome.tabs.sendMessage(tabId, {
+              action: "showIframeSelection",
+              text: request.text,
+              html: request.html,
+              clientX: request.clientX,
+              clientY: request.clientY,
+              iframeUrl: request.iframeUrl,
+              isKeyboard: request.isKeyboard
+            }, { frameId: 0 }, () => {
+              const err = chrome.runtime.lastError;
+            });
+          }
         });
       }
       sendResponse({ success: true });
