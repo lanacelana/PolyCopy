@@ -101,45 +101,26 @@
    * @returns {SVGElement}
    */
   const createSvgIcon = (type, size = 13) => {
-    const svgNS = "http://www.w3.org/2000/svg";
-    const createNode = (tag, attrs = {}) => {
-      const node = document.createElementNS(svgNS, tag);
-      for (const [key, val] of Object.entries(attrs)) {
-        node.setAttribute(key, val);
-      }
-      return node;
-    };
-    
-    const svg = createNode("svg", {
-      width: String(size),
-      height: String(size),
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: "currentColor",
-      "stroke-width": type === "checkmark" || type === "close" ? "3" : "2.5",
-      "stroke-linecap": "round",
-      "stroke-linejoin": "round"
-    });
-
+    const strokeWidth = (type === "checkmark" || type === "close") ? "3" : "2.5";
+    let content = "";
     if (type === "paste") {
-      svg.appendChild(createNode("path", { d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" }));
-      svg.appendChild(createNode("rect", { x: "8", y: "2", width: "8", height: "4", rx: "1", ry: "1" }));
-      svg.appendChild(createNode("path", { d: "M12 11v6m-3-3l3 3 3-3" }));
+      content = '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M12 11v6m-3-3l3 3 3-3"></path>';
     } else if (type === "text") {
-      svg.appendChild(createNode("line", { x1: "21", y1: "6", x2: "3", y2: "6" }));
-      svg.appendChild(createNode("line", { x1: "17", y1: "12", x2: "3", y2: "12" }));
-      svg.appendChild(createNode("line", { x1: "19", y1: "18", x2: "3", y2: "18" }));
+      content = '<line x1="21" y1="6" x2="3" y2="6"></line><line x1="17" y1="12" x2="3" y2="12"></line><line x1="19" y1="18" x2="3" y2="18"></line>';
     } else if (type === "trash") {
-      svg.appendChild(createNode("rect", { x: "3", y: "4", width: "18", height: "2" }));
-      svg.appendChild(createNode("path", { d: "M19 4v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4m3 0V2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }));
+      content = '<rect x="3" y="4" width="18" height="2"></rect><path d="M19 4v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4m3 0V2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>';
     } else if (type === "checkmark") {
-      svg.appendChild(createNode("polyline", { points: "20 6 9 17 4 12" }));
+      content = '<polyline points="20 6 9 17 4 12"></polyline>';
     } else if (type === "close") {
-      svg.appendChild(createNode("line", { x1: "18", y1: "6", x2: "6", y2: "18" }));
-      svg.appendChild(createNode("line", { x1: "6", y1: "6", x2: "18", y2: "18" }));
+      content = '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>';
     }
     
-    return svg;
+    const markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" style="display: block; pointer-events: none;">${content}</svg>`;
+    
+    // Parse the SVG markup into a DOM element
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(markup, "image/svg+xml");
+    return doc.documentElement;
   };
 
   /**
