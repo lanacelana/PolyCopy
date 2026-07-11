@@ -225,6 +225,15 @@
    ========================================== */
 
 #smart-markdown-floating-container {
+  /* ACID Color Token Palette */
+  --bg-main: #0b2114;         /* Deepest Acid Forest (almost black-green) */
+  --bg-item: #1a4d2e;         /* Deep Forest Green */
+  --border-item: #2c6a43;     /* Medium Forest Green */
+  
+  --accent-gold: #dfff00;     /* Acid Lime/Yellow-Green */
+  --text-light: #f2ffe5;      /* Soft Lime-White */
+  --text-muted: #7fa38a;      /* Muted Sage Green */
+
   position: fixed;
   z-index: 2147483647; /* Ensure button stays on top of page content */
   right: 20px;
@@ -318,7 +327,7 @@
 #smart-markdown-clear-btn {
   background: rgba(139, 38, 53, 0.8) !important;
   border: 2px solid rgba(139, 38, 53, 0.9) !important;
-  color: #ff8e9e !important;
+  color: #ffffff !important;
   z-index: 1 !important;
 }
 
