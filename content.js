@@ -95,6 +95,54 @@
   };
 
   /**
+   * Helper to create SVG elements dynamically.
+   * @param {string} type - SVG icon type ('paste', 'text', 'trash', 'checkmark', 'close').
+   * @param {number} [size=13] - Dimension size for the icon.
+   * @returns {SVGElement}
+   */
+  const createSvgIcon = (type, size = 13) => {
+    const svgNS = "http://www.w3.org/2000/svg";
+    const createNode = (tag, attrs = {}) => {
+      const node = document.createElementNS(svgNS, tag);
+      for (const [key, val] of Object.entries(attrs)) {
+        node.setAttribute(key, val);
+      }
+      return node;
+    };
+    
+    const svg = createNode("svg", {
+      width: String(size),
+      height: String(size),
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": type === "checkmark" || type === "close" ? "3" : "2.5",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round"
+    });
+
+    if (type === "paste") {
+      svg.appendChild(createNode("path", { d: "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" }));
+      svg.appendChild(createNode("rect", { x: "8", y: "2", width: "8", height: "4", rx: "1", ry: "1" }));
+      svg.appendChild(createNode("path", { d: "M12 11v6m-3-3l3 3 3-3" }));
+    } else if (type === "text") {
+      svg.appendChild(createNode("line", { x1: "21", y1: "6", x2: "3", y2: "6" }));
+      svg.appendChild(createNode("line", { x1: "17", y1: "12", x2: "3", y2: "12" }));
+      svg.appendChild(createNode("line", { x1: "19", y1: "18", x2: "3", y2: "18" }));
+    } else if (type === "trash") {
+      svg.appendChild(createNode("rect", { x: "3", y: "4", width: "18", height: "2" }));
+      svg.appendChild(createNode("path", { d: "M19 4v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4m3 0V2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" }));
+    } else if (type === "checkmark") {
+      svg.appendChild(createNode("polyline", { points: "20 6 9 17 4 12" }));
+    } else if (type === "close") {
+      svg.appendChild(createNode("line", { x1: "18", y1: "6", x2: "6", y2: "18" }));
+      svg.appendChild(createNode("line", { x1: "6", y1: "6", x2: "18", y2: "18" }));
+    }
+    
+    return svg;
+  };
+
+  /**
    * Reusable utility to make a DOM element draggable within viewport bounds.
    * @param {HTMLElement} element - The target element to drag.
    * @param {Object} [options={}] - Drag boundary parameters.
@@ -698,7 +746,7 @@
                   triggerClipboardUpdate(newList, true, x, y, plainText, htmlText);
                 });
               }
-            }, ["×"])
+            }, [createSvgIcon("close", 10)])
           ]);
         })
       );
@@ -854,92 +902,9 @@
       }, 1200); // 1.2s delay for visual feedback before collapsing back
     };
 
-    const svgNS = "http://www.w3.org/2000/svg";
-    
-    // Paste Clipboard with Down Arrow SVG
-    const svgPaste = document.createElementNS(svgNS, "svg");
-    svgPaste.setAttribute("width", "13");
-    svgPaste.setAttribute("height", "13");
-    svgPaste.setAttribute("viewBox", "0 0 24 24");
-    svgPaste.setAttribute("fill", "none");
-    svgPaste.setAttribute("stroke", "currentColor");
-    svgPaste.setAttribute("stroke-width", "2.5");
-    svgPaste.setAttribute("stroke-linecap", "round");
-    svgPaste.setAttribute("stroke-linejoin", "round");
-    
-    const pastePath1 = document.createElementNS(svgNS, "path");
-    pastePath1.setAttribute("d", "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2");
-    
-    const pasteRect = document.createElementNS(svgNS, "rect");
-    pasteRect.setAttribute("x", "8");
-    pasteRect.setAttribute("y", "2");
-    pasteRect.setAttribute("width", "8");
-    pasteRect.setAttribute("height", "4");
-    pasteRect.setAttribute("rx", "1");
-    pasteRect.setAttribute("ry", "1");
-    
-    const pastePath2 = document.createElementNS(svgNS, "path");
-    pastePath2.setAttribute("d", "M12 11v6m-3-3l3 3 3-3");
-    
-    svgPaste.appendChild(pastePath1);
-    svgPaste.appendChild(pasteRect);
-    svgPaste.appendChild(pastePath2);
-
-    // Text Paragraph Lines SVG
-    const svgText = document.createElementNS(svgNS, "svg");
-    svgText.setAttribute("width", "13");
-    svgText.setAttribute("height", "13");
-    svgText.setAttribute("viewBox", "0 0 24 24");
-    svgText.setAttribute("fill", "none");
-    svgText.setAttribute("stroke", "currentColor");
-    svgText.setAttribute("stroke-width", "2.5");
-    svgText.setAttribute("stroke-linecap", "round");
-    svgText.setAttribute("stroke-linejoin", "round");
-    
-    const line1 = document.createElementNS(svgNS, "line");
-    line1.setAttribute("x1", "21");
-    line1.setAttribute("y1", "6");
-    line1.setAttribute("x2", "3");
-    line1.setAttribute("y2", "6");
-    
-    const line2 = document.createElementNS(svgNS, "line");
-    line2.setAttribute("x1", "17");
-    line2.setAttribute("y1", "12");
-    line2.setAttribute("x2", "3");
-    line2.setAttribute("y2", "12");
-    
-    const line3 = document.createElementNS(svgNS, "line");
-    line3.setAttribute("x1", "19");
-    line3.setAttribute("y1", "18");
-    line3.setAttribute("x2", "3");
-    line3.setAttribute("y2", "18");
-    
-    svgText.appendChild(line1);
-    svgText.appendChild(line2);
-    svgText.appendChild(line3);
-
-    // Clear/Trash Can SVG
-    const svgClear = document.createElementNS(svgNS, "svg");
-    svgClear.setAttribute("width", "12");
-    svgClear.setAttribute("height", "12");
-    svgClear.setAttribute("viewBox", "0 0 24 24");
-    svgClear.setAttribute("fill", "none");
-    svgClear.setAttribute("stroke", "currentColor");
-    svgClear.setAttribute("stroke-width", "2.5");
-    svgClear.setAttribute("stroke-linecap", "round");
-    svgClear.setAttribute("stroke-linejoin", "round");
-    
-    const trashRect = document.createElementNS(svgNS, "rect");
-    trashRect.setAttribute("x", "3");
-    trashRect.setAttribute("y", "4");
-    trashRect.setAttribute("width", "18");
-    trashRect.setAttribute("height", "2");
-    
-    const trashPath = document.createElementNS(svgNS, "path");
-    trashPath.setAttribute("d", "M19 4v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4m3 0V2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2");
-    
-    svgClear.appendChild(trashRect);
-    svgClear.appendChild(trashPath);
+    const svgPaste = createSvgIcon("paste", 13);
+    const svgText = createSvgIcon("text", 13);
+    const svgClear = createSvgIcon("trash", 12);
 
     const btnPaste = el("button", {
       id: "smart-markdown-floating-btn",
