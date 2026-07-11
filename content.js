@@ -847,6 +847,93 @@
       container.classList.add("force-stacked");
     };
 
+    const svgNS = "http://www.w3.org/2000/svg";
+    
+    // Paste Clipboard with Down Arrow SVG
+    const svgPaste = document.createElementNS(svgNS, "svg");
+    svgPaste.setAttribute("width", "13");
+    svgPaste.setAttribute("height", "13");
+    svgPaste.setAttribute("viewBox", "0 0 24 24");
+    svgPaste.setAttribute("fill", "none");
+    svgPaste.setAttribute("stroke", "currentColor");
+    svgPaste.setAttribute("stroke-width", "2.5");
+    svgPaste.setAttribute("stroke-linecap", "round");
+    svgPaste.setAttribute("stroke-linejoin", "round");
+    
+    const pastePath1 = document.createElementNS(svgNS, "path");
+    pastePath1.setAttribute("d", "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2");
+    
+    const pasteRect = document.createElementNS(svgNS, "rect");
+    pasteRect.setAttribute("x", "8");
+    pasteRect.setAttribute("y", "2");
+    pasteRect.setAttribute("width", "8");
+    pasteRect.setAttribute("height", "4");
+    pasteRect.setAttribute("rx", "1");
+    pasteRect.setAttribute("ry", "1");
+    
+    const pastePath2 = document.createElementNS(svgNS, "path");
+    pastePath2.setAttribute("d", "M12 11v6m-3-3l3 3 3-3");
+    
+    svgPaste.appendChild(pastePath1);
+    svgPaste.appendChild(pasteRect);
+    svgPaste.appendChild(pastePath2);
+
+    // Text Paragraph Lines SVG
+    const svgText = document.createElementNS(svgNS, "svg");
+    svgText.setAttribute("width", "13");
+    svgText.setAttribute("height", "13");
+    svgText.setAttribute("viewBox", "0 0 24 24");
+    svgText.setAttribute("fill", "none");
+    svgText.setAttribute("stroke", "currentColor");
+    svgText.setAttribute("stroke-width", "2.5");
+    svgText.setAttribute("stroke-linecap", "round");
+    svgText.setAttribute("stroke-linejoin", "round");
+    
+    const line1 = document.createElementNS(svgNS, "line");
+    line1.setAttribute("x1", "21");
+    line1.setAttribute("y1", "6");
+    line1.setAttribute("x2", "3");
+    line1.setAttribute("y2", "6");
+    
+    const line2 = document.createElementNS(svgNS, "line");
+    line2.setAttribute("x1", "17");
+    line2.setAttribute("y1", "12");
+    line2.setAttribute("x2", "3");
+    line2.setAttribute("y2", "12");
+    
+    const line3 = document.createElementNS(svgNS, "line");
+    line3.setAttribute("x1", "19");
+    line3.setAttribute("y1", "18");
+    line3.setAttribute("x2", "3");
+    line3.setAttribute("y2", "18");
+    
+    svgText.appendChild(line1);
+    svgText.appendChild(line2);
+    svgText.appendChild(line3);
+
+    // Clear/Trash Can SVG
+    const svgClear = document.createElementNS(svgNS, "svg");
+    svgClear.setAttribute("width", "12");
+    svgClear.setAttribute("height", "12");
+    svgClear.setAttribute("viewBox", "0 0 24 24");
+    svgClear.setAttribute("fill", "none");
+    svgClear.setAttribute("stroke", "currentColor");
+    svgClear.setAttribute("stroke-width", "2.5");
+    svgClear.setAttribute("stroke-linecap", "round");
+    svgClear.setAttribute("stroke-linejoin", "round");
+    
+    const trashRect = document.createElementNS(svgNS, "rect");
+    trashRect.setAttribute("x", "3");
+    trashRect.setAttribute("y", "4");
+    trashRect.setAttribute("width", "18");
+    trashRect.setAttribute("height", "2");
+    
+    const trashPath = document.createElementNS(svgNS, "path");
+    trashPath.setAttribute("d", "M19 4v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4m3 0V2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2");
+    
+    svgClear.appendChild(trashRect);
+    svgClear.appendChild(trashPath);
+
     const btnPaste = el("button", {
       id: "smart-markdown-floating-btn",
       title: "Paste Clipboard as Markdown",
@@ -859,7 +946,7 @@
         handleFloatingButtonClick();
         collapseContainer();
       }
-    }, ["P"]);
+    }, [svgPaste]);
 
     const btnPastePlain = el("button", {
       id: "smart-markdown-paste-plain-btn",
@@ -873,7 +960,7 @@
         handleFloatingPastePlainClick();
         collapseContainer();
       }
-    }, ["T"]);
+    }, [svgText]);
 
     const btnClear = el("button", {
       id: "smart-markdown-clear-btn",
@@ -887,7 +974,7 @@
         handleClearButtonClick();
         collapseContainer();
       }
-    }, ["C"]);
+    }, [svgClear]);
 
     const container = el("div", {
       id: "smart-markdown-floating-container",
