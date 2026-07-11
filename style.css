@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 /**
  * Smart Multi-Copy Highlight - Injected Page Styles
  * 
@@ -40,12 +42,12 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background-color: var(--bg-main);
+  background: radial-gradient(circle at 50% 0%, #0d2919 0%, #05140b 100%) !important;
   padding: 8px;
   border-radius: 16px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border-item);
-  font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(44, 106, 67, 0.5) !important;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   font-size: 13px;
   min-width: 240px;
   backdrop-filter: blur(8px);
@@ -59,25 +61,26 @@
 /* Tooltip Actions Container */
 .tooltip-buttons {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   align-items: center;
 }
 
 /* Core Button Styles */
 .smart-copy-tooltip button {
   border: none;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   height: 32px;
+  font-family: 'Outfit', sans-serif !important;
 }
 
 .smart-copy-tooltip button:hover {
-  filter: brightness(1.15);
+  filter: brightness(1.05);
   transform: translateY(-1px);
 }
 
@@ -87,43 +90,61 @@
 
 /* Pills & Circles Buttons Shape Configurations */
 .smart-copy-tooltip .btn-pill {
-  border-radius: 30px;
-  padding: 0 10px;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
 .smart-copy-tooltip .btn-circle {
-  border-radius: 50%;
+  border-radius: 12px !important;
   width: 32px;
+  height: 32px;
   padding: 0;
 }
 
 /* Button Color Theme Variants */
 .smart-copy-tooltip .btn-blue {
-  background-color: var(--btn-link-bg);
-  color: var(--btn-link-text);
+  background: linear-gradient(135deg, var(--accent-gold) 0%, #b8df00 100%) !important;
+  color: var(--bg-main) !important;
   flex: 2;
+}
+
+.smart-copy-tooltip .btn-blue:hover {
+  box-shadow: 0 4px 12px rgba(223, 255, 0, 0.3);
 }
 
 .smart-copy-tooltip .btn-orange {
-  background-color: var(--btn-text-bg);
-  color: var(--btn-text-text);
+  background: rgba(26, 77, 46, 0.3) !important;
+  border: 1px solid rgba(44, 106, 67, 0.6) !important;
+  color: var(--text-light) !important;
   flex: 2;
-  border: 1px solid var(--border-item);
+}
+
+.smart-copy-tooltip .btn-orange:hover {
+  background: rgba(26, 77, 46, 0.45) !important;
+  border-color: rgba(223, 255, 0, 0.3) !important;
+  color: var(--accent-gold) !important;
 }
 
 .smart-copy-tooltip .btn-clear {
-  background-color: var(--btn-clear-bg);
-  color: white;
-  font-size: 13px;
+  background: rgba(139, 38, 53, 0.2) !important;
+  border: 1px solid rgba(139, 38, 53, 0.5) !important;
+  color: #ff8e9e !important;
+}
+
+.smart-copy-tooltip .btn-clear:hover {
+  background: rgba(139, 38, 53, 0.45) !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .smart-copy-tooltip .btn-success {
   background-color: var(--btn-success-bg) !important;
   color: white !important;
   flex: 4;
-  border-radius: 30px;
+  border-radius: 12px !important;
 }
 
 /* ==========================================
@@ -133,9 +154,9 @@
 .tooltip-list-container {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border-bottom: 1px solid var(--border-item);
-  padding-bottom: 6px;
+  gap: 6px;
+  border-bottom: 1px solid rgba(44, 106, 67, 0.3);
+  padding-bottom: 8px;
   max-height: 110px;
   overflow-y: auto;
 }
@@ -144,23 +165,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--bg-item);
-  padding: 4px 10px;
+  background-color: rgba(26, 77, 46, 0.3);
+  padding: 6px 10px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--text-light);
-  border: 1px solid var(--border-item);
+  border: 1px solid rgba(44, 106, 67, 0.4);
+  transition: all 0.2s ease;
+}
+
+.tooltip-list-item:hover {
+  border-color: rgba(223, 255, 0, 0.3);
+  background-color: rgba(26, 77, 46, 0.45);
 }
 
 .tooltip-list-item.type-link {
-  background-color: var(--accent-gold);
-  border-color: var(--accent-gold);
-  color: #0b2114;
+  background-color: rgba(223, 255, 0, 0.08);
+  border-color: rgba(223, 255, 0, 0.3);
+  color: var(--accent-gold);
 }
 
 .tooltip-list-item.type-link .tooltip-delete-btn {
-  color: rgba(11, 33, 20, 0.6) !important;
+  color: rgba(223, 255, 0, 0.6) !important;
 }
 
 /* Delete Button Styles */
@@ -168,20 +195,19 @@
   background: transparent !important;
   border: none !important;
   color: var(--text-muted) !important;
-  font-weight: 700 !important;
-  font-size: 14px !important;
   cursor: pointer;
-  height: auto !important;
-  width: auto !important;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 2px !important;
-  border-radius: 0 !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease;
 }
 
 .tooltip-delete-btn:hover {
   color: #ef4444 !important;
-  background: transparent !important;
-  transform: scale(1.2) !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  transform: scale(1.1) rotate(90deg) !important;
 }
 
 /* Custom Scrollbars */

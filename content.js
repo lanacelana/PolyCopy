@@ -738,6 +738,30 @@
       }
     }, ["Text It"]);
 
+    // Create SVG Trash icon
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svgTrash = document.createElementNS(svgNS, "svg");
+    svgTrash.setAttribute("width", "13");
+    svgTrash.setAttribute("height", "13");
+    svgTrash.setAttribute("viewBox", "0 0 24 24");
+    svgTrash.setAttribute("fill", "none");
+    svgTrash.setAttribute("stroke", "currentColor");
+    svgTrash.setAttribute("stroke-width", "2.5");
+    svgTrash.setAttribute("stroke-linecap", "round");
+    svgTrash.setAttribute("stroke-linejoin", "round");
+
+    const trashRect = document.createElementNS(svgNS, "rect");
+    trashRect.setAttribute("x", "3");
+    trashRect.setAttribute("y", "4");
+    trashRect.setAttribute("width", "18");
+    trashRect.setAttribute("height", "2");
+
+    const trashPath = document.createElementNS(svgNS, "path");
+    trashPath.setAttribute("d", "M19 4v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4m3 0V2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2");
+
+    svgTrash.appendChild(trashRect);
+    svgTrash.appendChild(trashPath);
+
     const btnClearAll = el("button", {
       className: "btn-clear btn-circle",
       onclick: () => {
@@ -747,7 +771,7 @@
           triggerClipboardUpdate([]);
         });
       }
-    }, ["🗑️"]);
+    }, [svgTrash]);
 
     const buttonRow = el("div", { className: "tooltip-buttons" }, [
       btnAddLink,
