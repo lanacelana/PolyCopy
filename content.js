@@ -1135,7 +1135,7 @@
       btnPaste.classList.add("success");
       setTimeout(() => {
         btnPaste.innerHTML = "";
-        btnPaste.appendChild(svgPaste);
+        btnPaste.appendChild(createSvgIcon("paste", 13));
         btnPaste.classList.remove("success");
       }, 1000);
     };
@@ -1149,7 +1149,7 @@
       btnPastePlain.classList.add("success");
       setTimeout(() => {
         btnPastePlain.innerHTML = "";
-        btnPastePlain.appendChild(svgText);
+        btnPastePlain.appendChild(createSvgIcon("text", 13));
         btnPastePlain.classList.remove("success");
       }, 1000);
     };
@@ -1163,7 +1163,7 @@
       btnClear.classList.add("success");
       setTimeout(() => {
         btnClear.innerHTML = "";
-        btnClear.appendChild(svgClear);
+        btnClear.appendChild(createSvgIcon("trash", 12));
         btnClear.classList.remove("success");
       }, 1000);
     };
