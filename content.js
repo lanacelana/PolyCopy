@@ -115,7 +115,8 @@
       content = '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>';
     }
     
-    const markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" style="display: block; pointer-events: none;">${content}</svg>`;
+    const className = type === "checkmark" ? "checkmark-svg" : "main-svg";
+    const markup = `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" style="display: block; pointer-events: none;">${content}</svg>`;
     
     // Parse the SVG markup into a DOM element
     const parser = new DOMParser();
@@ -883,10 +884,6 @@
       }, 1200); // 1.2s delay for visual feedback before collapsing back
     };
 
-    const svgPaste = createSvgIcon("paste", 13);
-    const svgText = createSvgIcon("text", 13);
-    const svgClear = createSvgIcon("trash", 12);
-
     const btnPaste = el("button", {
       id: "smart-markdown-floating-btn",
       title: "Paste Clipboard as Markdown",
@@ -899,7 +896,7 @@
         handleFloatingButtonClick();
         collapseContainer();
       }
-    }, [svgPaste]);
+    }, [createSvgIcon("paste", 13), createSvgIcon("checkmark", 13)]);
 
     const btnPastePlain = el("button", {
       id: "smart-markdown-paste-plain-btn",
@@ -913,7 +910,7 @@
         handleFloatingPastePlainClick();
         collapseContainer();
       }
-    }, [svgText]);
+    }, [createSvgIcon("text", 13), createSvgIcon("checkmark", 13)]);
 
     const btnClear = el("button", {
       id: "smart-markdown-clear-btn",
@@ -927,7 +924,7 @@
         handleClearButtonClick();
         collapseContainer();
       }
-    }, [svgClear]);
+    }, [createSvgIcon("trash", 12), createSvgIcon("checkmark", 12)]);
 
     const container = el("div", {
       id: "smart-markdown-floating-container",
@@ -1090,33 +1087,12 @@
       });
     };
 
-    const createCheckmarkSvg = () => {
-      const svgCheck = document.createElementNS(svgNS, "svg");
-      svgCheck.setAttribute("width", "13");
-      svgCheck.setAttribute("height", "13");
-      svgCheck.setAttribute("viewBox", "0 0 24 24");
-      svgCheck.setAttribute("fill", "none");
-      svgCheck.setAttribute("stroke", "currentColor");
-      svgCheck.setAttribute("stroke-width", "3");
-      svgCheck.setAttribute("stroke-linecap", "round");
-      svgCheck.setAttribute("stroke-linejoin", "round");
-      
-      const checkPath = document.createElementNS(svgNS, "polyline");
-      checkPath.setAttribute("points", "20 6 9 17 4 12");
-      svgCheck.appendChild(checkPath);
-      return svgCheck;
-    };
-
     /**
      * Shows visual tick animation on success.
      */
     const showSuccessState = () => {
-      btnPaste.innerHTML = "";
-      btnPaste.appendChild(createCheckmarkSvg());
       btnPaste.classList.add("success");
       setTimeout(() => {
-        btnPaste.innerHTML = "";
-        btnPaste.appendChild(createSvgIcon("paste", 13));
         btnPaste.classList.remove("success");
       }, 1000);
     };
@@ -1125,12 +1101,8 @@
      * Shows visual tick animation on plain text paste success.
      */
     const showPlainSuccessState = () => {
-      btnPastePlain.innerHTML = "";
-      btnPastePlain.appendChild(createCheckmarkSvg());
       btnPastePlain.classList.add("success");
       setTimeout(() => {
-        btnPastePlain.innerHTML = "";
-        btnPastePlain.appendChild(createSvgIcon("text", 13));
         btnPastePlain.classList.remove("success");
       }, 1000);
     };
@@ -1139,12 +1111,8 @@
      * Shows visual tick animation on clearing.
      */
     const showClearSuccessState = () => {
-      btnClear.innerHTML = "";
-      btnClear.appendChild(createCheckmarkSvg());
       btnClear.classList.add("success");
       setTimeout(() => {
-        btnClear.innerHTML = "";
-        btnClear.appendChild(createSvgIcon("trash", 12));
         btnClear.classList.remove("success");
       }, 1000);
     };

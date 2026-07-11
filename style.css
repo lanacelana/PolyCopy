@@ -375,3 +375,20 @@
 #smart-markdown-floating-container.force-stacked button {
   transform: translateX(0) !important;
 }
+
+/* Toggling main SVG vs checkmark SVG based on success state */
+#smart-markdown-floating-container button .main-svg {
+  display: block !important;
+}
+
+#smart-markdown-floating-container button .checkmark-svg {
+  display: none !important;
+}
+
+#smart-markdown-floating-container button.success .main-svg {
+  display: none !important;
+}
+
+#smart-markdown-floating-container button.success .checkmark-svg {
+  display: block !important;
+}
